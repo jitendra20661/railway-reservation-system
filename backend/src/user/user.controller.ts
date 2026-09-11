@@ -1,34 +1,46 @@
-import { Controller, Get, Post, Body, Param, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Req, UseGuards, Patch } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { JWTAuthGuard } from 'src/auth/guards/jwtauth.guard';
-import { Public } from 'src/auth/decorators/public.decorator';
+import { PermissionGuard } from 'src/permission/guards/permission.guard';
+import { PermissionAction, PermissionResource } from 'src/permission/enums/permission.enum';
+import { RequirePermission } from 'src/permission/decorator/permission.decorator';
+import { SuperAdminGuard } from 'src/auth/guards/super-admin.guard';
+import { Permission } from './schemas/user.schema';
+
+
 
 @Controller('user')
+// @UseGuards(PermissionGuard)
 export class UserController {
   constructor(
     private readonly userService: UserService,
   ) {}
 
-  // @Post()
-  // create(@Body() createUserDto: CreateUserDto) {
-  //   return this.userService.create(createUserDto);
-  // }
 
 
-  @Public() //TODO: remove public later
+  @Get('me')
+  getMe(@Req() req) {
+    return this.userService.findById(req.user.sub);
+  }
+
+
+
+  @UseGuards(PermissionGuard)
+  @RequirePermission(PermissionResource.USERS, PermissionAction.READ)
   @Get()
-  getUsers() {
+  getAllUsers() {
     return this.userService.findAll();
   }
 
-  // @UseGuards(JWTAuthGuard)
-  @Get('me')
-  getMe(@Req() req) {
-    // const token = req.headers.authorization?.replace('Bearer ', '');
-    // const payload = await this.jwtAuthService.verifyToken(token);
-    return this.userService.findById(req.user.sub);
+  @Patch(':id/permissions')
+  @UseGuards(PermissionGuard)
+  @RequirePermission(PermissionResource.USERS,PermissionAction.UPDATE)
+  updatePermissions(
+    @Param('id') id: string,
+    @Body() permissions: Permission[],
+  ) {
+    return this.userService.updatePermissions(id, permissions);
   }
+
 
   // @Get(':id')
   // findOne(@Param('id') id: string) {

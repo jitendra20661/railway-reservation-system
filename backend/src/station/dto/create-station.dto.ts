@@ -45,9 +45,9 @@ export class CreateStationDto {
   @Min(0)
   distanceFromRoha: number;
 
-//   @ValidateNested()
-//   @Type(() => GeolocationDto)
-//   geolocation: GeolocationDto;
+  @ValidateNested()
+  @Type(() => GeolocationDto)
+  geolocation: GeolocationDto;
 
   @IsOptional()
   @IsBoolean()

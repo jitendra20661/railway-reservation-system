@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-import { getToken, isAdmin, logout } from "../../services/auth";
+import { getToken, getUser, logout, hasPermission } from "../../services/auth";
+
+import { RESOURCE, ACTION } from "../../services/permissions";
 
 export default function DashboardLayout({
   children,
@@ -13,12 +15,18 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
 
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
     const token = getToken();
+    const user = getUser();
 
-    if (!token || !isAdmin()) {
+    if (!token || !user) {
       router.replace("/login");
+      return;
     }
+
+    setMounted(true);
   }, [router]);
 
   const handleLogout = () => {
@@ -26,13 +34,13 @@ export default function DashboardLayout({
     router.replace("/login");
   };
 
+  // Don't render permission-dependent UI during SSR/hydration
+  if (!mounted) {
+    return null;
+  }
+
   return (
-    <div
-      style={{
-        display: "flex",
-        minHeight: "100vh",
-      }}
-    >
+    <div style={{ display: "flex", minHeight: "100vh" }}>
       <aside
         style={{
           width: "180px",
@@ -41,7 +49,7 @@ export default function DashboardLayout({
           boxSizing: "border-box",
         }}
       >
-        <h3 style={{ margin: "0 0 20px" }}>Admin</h3>
+        <h3 style={{ margin: "0 0 20px" }}>{getUser()?.name?.toUpperCase()}</h3>
 
         <nav
           style={{
@@ -52,12 +60,21 @@ export default function DashboardLayout({
         >
           <Link href="/dashboard">Dashboard</Link>
 
-          {/* <Link href="/dashboard/users">Users</Link> */}
-          {/* <Link href="/dashboard/bookings">Bookings</Link> */}
-          {/* <Link href="/dashboard/trains">Trains</Link> */}
-          {/* <Link href="/dashboard/stations">Stations</Link> */}
+          {hasPermission(RESOURCE.SCHEDULES, ACTION.READ) && (
+            <Link href="/dashboard/schedules">Schedules</Link>
+          )}
 
-          <Link href="/dashboard/schedules">Schedules</Link>
+          {hasPermission(RESOURCE.TRAINS, ACTION.READ) && (
+            <Link href="/dashboard/trains">Trains</Link>
+          )}
+
+          {hasPermission(RESOURCE.STATIONS, ACTION.READ) && (
+            <Link href="/dashboard/stations">Stations</Link>
+          )}
+
+          {hasPermission(RESOURCE.USERS, ACTION.READ) && (
+            <Link href="/dashboard/users">Users</Link>
+          )}
         </nav>
 
         <button

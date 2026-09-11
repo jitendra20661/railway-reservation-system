@@ -1,8 +1,31 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 import { Role } from '../enums/role.enum';
+import { PermissionAction, PermissionResource } from '../../permission/enums/permission.enum';
+
 
 export type UserDocument = HydratedDocument<User>;
+
+
+
+
+@Schema({ _id: false })
+export class Permission {
+  @Prop({
+    required: true,
+    enum: PermissionResource,
+  })
+  resource: PermissionResource;
+
+  @Prop({
+    type: [String],
+    enum: PermissionAction,
+    default: [],
+  })
+  actions: PermissionAction[];
+}
+
+
 
 @Schema({ timestamps: true })
 export class User {
@@ -22,8 +45,8 @@ export class User {
   @Prop({type: String,enum: Role,default: Role.USER,})
   role: Role;
 
-  @Prop({type: [String],default: [],})
-  permissions: string[];
+  @Prop({type: [Permission],default: [],})
+  permissions: Permission[];
 
   @Prop({type: Boolean,default: true,})
   isActive: boolean;

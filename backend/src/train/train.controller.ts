@@ -13,7 +13,7 @@ import { CreateTrainDto } from './dto/create-train.dto';
 import { UpdateTrainDto } from './dto/update-train.dto';
 import { Public } from 'src/auth/decorators/public.decorator';
 
-@Public()
+// @Public()
 @Controller('train')
 export class TrainController {
   constructor(
@@ -21,11 +21,13 @@ export class TrainController {
   ) {}
 
   @Post()
+  // @RequirePermission(PermissionResource.TRAIN, PermissionAction.CREATE)
   create(@Body() createTrainDto: CreateTrainDto) {
     return this.trainService.create(createTrainDto);
   }
 
   @Get()
+  // @RequirePermission(PermissionResource.TRAIN, PermissionAction.READ)
   findAll() {
     return this.trainService.findAll();
   }

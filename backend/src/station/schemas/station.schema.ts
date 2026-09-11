@@ -37,23 +37,23 @@ export class Station {
   })
   distanceFromRoha: number;
 
-  // @Prop({
-  //   type: {
-  //     latitude: {
-  //       type: Number,
-  //       required: true,
-  //     },
-  //     longitude: {
-  //       type: Number,
-  //       required: true,
-  //     },
-  //   },
-  //   required: true,
-  // })
-  // geolocation: {
-  //   latitude: number;
-  //   longitude: number;
-  // };
+  @Prop({
+    type: {
+      latitude: {
+        type: Number,
+        required: true,
+      },
+      longitude: {
+        type: Number,
+        required: true,
+      },
+    },
+    required: true,
+  })
+  geolocation: {
+    latitude: number;
+    longitude: number;
+  };
 
   @Prop({
     default: true,
@@ -63,3 +63,12 @@ export class Station {
 
 export const StationSchema = SchemaFactory.createForClass(Station);
 
+
+
+// Later in React map simply do:
+// <Marker
+//   position={[
+//     station.geolocation.latitude,
+//     station.geolocation.longitude,
+//   ]}
+// />

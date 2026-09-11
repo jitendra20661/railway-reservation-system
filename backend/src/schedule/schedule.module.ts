@@ -9,6 +9,8 @@ import {
 } from './schemas/schedule.schema';
 import { StationModule } from 'src/station/station.module';
 import { TrainModule } from 'src/train/train.module';
+import { PermissionGuard } from 'src/permission/guards/permission.guard';
+import { UserModule } from 'src/user/user.module';
 
 @Module({
   imports: [
@@ -20,9 +22,10 @@ import { TrainModule } from 'src/train/train.module';
     ]),
     StationModule,
     TrainModule,
+    UserModule
   ],
   controllers: [ScheduleController],
-  providers: [ScheduleService],
+  providers: [ScheduleService, PermissionGuard],
   exports: [ScheduleService],
 })
 export class ScheduleModule {}

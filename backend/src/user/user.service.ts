@@ -1,9 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 // import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schemas/user.schema';
 import { Model } from 'mongoose';
+import { UpdatePermissionsDto } from 'src/permission/dto/update-permissions.dto';
+import { Role } from './enums/role.enum';
 
 @Injectable()
 export class UserService {
@@ -35,6 +37,24 @@ export class UserService {
   }
 
 
+  async updatePermissions(userId: string, permissions: UpdatePermissionsDto['permissions']) {
+  const user = await this.userModel.findById(userId);
+
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  // TODO: Later allow normal user to be promoted to SUB_ADMIN
+  if (user.role !== Role.SUB_ADMIN) {
+    throw new BadRequestException(
+      'Permissions can only be assigned to SUB_ADMIN users',
+    );
+  }
+
+  user.permissions = permissions;
+
+  return user.save();
+}
   
   // update(id: number, updateUserDto: UpdateUserDto) {
   //   return `This action updates a #${id} user`;

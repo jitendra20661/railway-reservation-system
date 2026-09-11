@@ -8,7 +8,7 @@ import { CreateBookingDto } from './dto/create-booking.dto';
 export class BookingController {
   constructor(private readonly bookingService: BookingService) {}
 
-  @Public()
+  // @Public()
   @Get('availability')
   getAvailability(
     @Query('scheduleId') scheduleId: string,
@@ -31,8 +31,9 @@ export class BookingController {
     return this.bookingService.createBooking(req.user.sub, createBookingDto);
   }
 
-  @Public()
+  // @Public()
   @Get()
+  // @RequirePermission(PermissionResource.BOOKING, PermissionAction.READ)
   getAllBooking(){
     return this.bookingService.getAllBooking();
   }

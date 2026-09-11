@@ -4,6 +4,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { LoginUserDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
+import { permission } from 'process';
 
 
 @Injectable()
@@ -32,6 +33,11 @@ export class AuthService {
     // 4. Return appropriate response
     return res;
   }
+
+
+
+
+
 
   async login(loginUserDto: LoginUserDto): Promise<{
   access_token: string;
@@ -72,6 +78,7 @@ export class AuthService {
     name: user.name,
     email: user.email,
     role: user.role,
+    permissions: user.permissions
   };
 
   // 5. Return token + user details

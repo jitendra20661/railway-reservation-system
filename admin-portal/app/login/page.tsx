@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "../../services/api";
+import { Roles } from "@/services/roles";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -27,7 +28,7 @@ export default function Login() {
 
       const { access_token, user } = response.data;
 
-      if (user.role !== "SUPER_ADMIN") {
+      if (user.role !== Roles.SUPER_ADMIN && user.role !== Roles.SUB_ADMIN) {
         setError("You are not authorized to access the admin portal.");
         return;
       }

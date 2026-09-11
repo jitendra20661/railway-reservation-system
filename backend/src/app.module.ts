@@ -11,6 +11,7 @@ import { ScheduleModule } from './schedule/schedule.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
 import { BookingModule } from './booking/booking.module';
+import { PermissionModule } from './permission/permission.module';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { BookingModule } from './booking/booking.module';
     MongooseModule.forRoot(process.env.MONGO_URI!),
 
 
-    AuthModule, UserModule, StationModule, TrainModule, ScheduleModule, BookingModule],
+    AuthModule, UserModule, StationModule, TrainModule, ScheduleModule, BookingModule, PermissionModule],
   controllers: [AppController],
   providers: [AppService],
 })
