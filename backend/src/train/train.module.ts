@@ -4,6 +4,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { TrainController } from './train.controller';
 import { TrainService } from './train.service';
 import { Train, TrainSchema } from './schemas/train.schema';
+import { UserModule } from 'src/user/user.module';
+import { User, UserSchema } from 'src/user/schemas/user.schema';
 
 @Module({
   imports: [
@@ -12,7 +14,13 @@ import { Train, TrainSchema } from './schemas/train.schema';
         name: Train.name,
         schema: TrainSchema,
       },
+      {
+        name: User.name,
+        schema: UserSchema,
+      },
+
     ]),
+    
   ],
   controllers: [TrainController],
   providers: [TrainService],

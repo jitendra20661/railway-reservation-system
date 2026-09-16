@@ -42,7 +42,7 @@ export class StationService {
   async findAll() {
     return this.stationModel
       .find()
-      .sort({ name: 1 })
+      .sort({ distanceFromRoha: 1 })
       .exec();
   }
 
@@ -86,17 +86,7 @@ export class StationService {
   // }
 
 
-  // async remove(id: string) {
-  //   const station = await this.stationModel.findById(id).exec();
 
-  //   if (!station) {
-  //     throw new NotFoundException('Station not found');
-  //   }
-
-  //   station.isActive = false;
-
-  //   return station.save();
-  // }
 
   // async search(query: string) {
   //   return this.stationModel
@@ -111,4 +101,17 @@ export class StationService {
   //     .limit(10)
   //     .exec();
   // }
+
+
+    async remove(id: string) {
+    const station = await this.stationModel.findById(id).exec();
+
+    if (!station) {
+      throw new NotFoundException('Station not found');
+    }
+
+    station.isActive = false;
+
+    return station.save();
+  }
 }

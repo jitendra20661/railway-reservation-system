@@ -243,25 +243,6 @@ export class ScheduleService {
   //   return schedule;
   // }
 
-  // async remove(id: string) {
-  //   const schedule = await this.scheduleModel
-  //     .findByIdAndUpdate(
-  //       id,
-  //       {
-  //         status: ScheduleStatus.INACTIVE,
-  //       },
-  //       {
-  //         new: true,
-  //       },
-  //     )
-  //     .exec();
-
-  //   if (!schedule) {
-  //     throw new NotFoundException('Schedule not found');
-  //   }
-
-  //   return schedule;
-  // }
 
   async search(searchScheduleDto: SearchScheduleDto) {
     const { from, to, date } = searchScheduleDto;
@@ -362,5 +343,27 @@ export class ScheduleService {
     }
 
     return results;
+  }
+
+
+
+  async remove(id: string) {
+    const schedule = await this.scheduleModel
+      .findByIdAndUpdate(
+        id,
+        {
+          status: ScheduleStatus.INACTIVE,
+        },
+        {
+          new: true,
+        },
+      )
+      .exec();
+
+    if (!schedule) {
+      throw new NotFoundException('Schedule not found');
+    }
+
+    return schedule;
   }
 }

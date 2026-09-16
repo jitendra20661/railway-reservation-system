@@ -97,7 +97,7 @@ export default function AddStationPage() {
               name="stationCode"
               value={form.stationCode}
               onChange={handleChange}
-              placeholder="e.g. ROHA"
+              //   placeholder="e.g. ROHA"
               style={styles.input}
             />
           </div>
@@ -108,7 +108,7 @@ export default function AddStationPage() {
               name="name"
               value={form.name}
               onChange={handleChange}
-              placeholder="e.g. Roha"
+              //   placeholder="e.g. Roha"
               style={styles.input}
             />
           </div>
@@ -119,7 +119,7 @@ export default function AddStationPage() {
               name="city"
               value={form.city}
               onChange={handleChange}
-              placeholder="e.g. Roha"
+              //   placeholder="e.g. Roha"
               style={styles.input}
             />
           </div>
@@ -130,7 +130,7 @@ export default function AddStationPage() {
               name="state"
               value={form.state}
               onChange={handleChange}
-              placeholder="e.g. Maharashtra"
+              //   placeholder="e.g. Maharashtra"
               style={styles.input}
             />
           </div>
@@ -281,25 +281,5 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: "flex-end",
     gap: "10px",
     marginTop: "28px",
-  },
-
-  primaryButton: {
-    height: "40px",
-    padding: "0 18px",
-    border: "none",
-    background: "#222",
-    color: "#fff",
-    cursor: "pointer",
-    fontSize: "14px",
-  },
-
-  secondaryButton: {
-    height: "40px",
-    padding: "0 18px",
-    border: "1px solid #ccc",
-    background: "#fff",
-    color: "#222",
-    cursor: "pointer",
-    fontSize: "14px",
   },
 };

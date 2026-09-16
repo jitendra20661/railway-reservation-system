@@ -3,6 +3,8 @@ import { StationService } from './station.service';
 import { CreateStationDto } from './dto/create-station.dto';
 import { UpdateStationDto } from './dto/update-station.dto';
 import { Public } from 'src/auth/decorators/public.decorator';
+import { RequirePermission } from 'src/permission/decorator/permission.decorator';
+import { PermissionAction, PermissionResource } from 'src/permission/enums/permission.enum';
 
 // @Public()
 @Controller('station')
@@ -33,9 +35,9 @@ export class StationController {
   //   return this.stationService.update(+id, updateStationDto);
   // }
 
-  // @Delete(':id')
-  // @RequirePermission(PermissionResource.STATION, PermissionAction.DELETE)
-  // remove(@Param('id') id: string) {
-  //   return this.stationService.remove(+id);
-  // }
+  @Delete(':id')
+  @RequirePermission(PermissionResource.STATIONS, PermissionAction.DELETE)
+  remove(@Param('id') id: string) {
+    return this.stationService.remove(id);
+  }
 }

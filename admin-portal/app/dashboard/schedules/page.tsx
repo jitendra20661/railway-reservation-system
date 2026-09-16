@@ -73,6 +73,26 @@ export default function SchedulesPage() {
     return <p>Loading schedules...</p>;
   }
 
+  const handleDelete = async (id: string) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this schedule?",
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await api.delete(`/schedule/${id}`);
+
+      setSchedules((current) =>
+        current.filter((schedule) => schedule._id !== id),
+      );
+    } catch (error: any) {
+      console.error("Failed to delete schedule:", error);
+
+      alert(error?.response?.data?.message || "Failed to delete schedule.");
+    }
+  };
+
   return (
     <div>
       {/* Header */}
@@ -81,10 +101,14 @@ export default function SchedulesPage() {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          marginBottom: "14px",
+          // marginBottom: "14px",
+          maxWidth: "60%",
+          minWidth: "400px",
+
+          margin: "0px auto",
         }}
       >
-        <h2 style={{ margin: 0 }}>Schedules</h2>
+        <h2>Schedules</h2>
 
         <button onClick={() => router.push("/dashboard/schedules/add")}>
           Add Schedule
@@ -102,34 +126,50 @@ export default function SchedulesPage() {
               border: "1px solid #d6dbe1",
               padding: "10px 12px",
               marginBottom: "8px",
+              maxWidth: "60%",
+              minWidth: "400px",
+
+              margin: "20px auto",
             }}
           >
             {/* Train */}
+
             <div
               style={{
                 display: "flex",
                 alignItems: "baseline",
+                justifyContent: "space-between",
                 gap: "7px",
                 marginBottom: "7px",
               }}
             >
-              <strong
-                style={{
-                  fontSize: "16px",
-                  color: "#1e3a5f",
-                }}
-              >
-                {schedule.trainId.name}
-              </strong>
+              <div>
+                <strong
+                  style={{
+                    fontSize: "16px",
+                    color: "#1e3a5f",
+                  }}
+                >
+                  {schedule.trainId.name}
+                </strong>
 
-              <span
-                style={{
-                  fontSize: "12px",
-                  color: "#666",
-                }}
-              >
-                #{schedule.trainId.trainNumber}
-              </span>
+                <span
+                  style={{
+                    fontSize: "12px",
+                    color: "#666",
+                  }}
+                >
+                  #{schedule.trainId.trainNumber}
+                </span>
+              </div>
+              <div>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(schedule._id)}
+                >
+                  Delete
+                </button>
+              </div>
             </div>
 
             {/* Metadata */}

@@ -73,26 +73,12 @@ export default function UsersPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  /*
-   * Load logged-in user.
-   */
   useEffect(() => {
     const user = getUser();
 
     setCurrentUser(user);
   }, []);
 
-  /*
-   * Permission rules:
-   *
-   * SUPER_ADMIN:
-   *   - Can view users
-   *   - Can manage permissions
-   *
-   * SUB_ADMIN:
-   *   - USERS + READ   -> can view users
-   *   - USERS + UPDATE -> can manage permissions
-   */
   const canViewUsers =
     currentUser?.role === Roles.SUPER_ADMIN ||
     hasPermission(RESOURCE.USERS, ACTION.READ);
@@ -101,12 +87,6 @@ export default function UsersPage() {
     currentUser?.role === Roles.SUPER_ADMIN ||
     hasPermission(RESOURCE.USERS, ACTION.UPDATE);
 
-  /*
-   * Fetch users.
-   *
-   * We only fetch when the current user is loaded
-   * and has USERS:READ or is SUPER_ADMIN.
-   */
   useEffect(() => {
     if (!currentUser) {
       return;
@@ -137,20 +117,11 @@ export default function UsersPage() {
     }
   };
 
-  /*
-   * Open permission editor.
-   */
   const openPermissions = (user: User) => {
-    /*
-     * Extra frontend protection.
-     */
     if (!canManagePermissions) {
       return;
     }
 
-    /*
-     * Only SUB_ADMIN permissions should be edited.
-     */
     if (user.role !== Roles.SUB_ADMIN) {
       return;
     }
@@ -167,27 +138,17 @@ export default function UsersPage() {
     );
   };
 
-  /*
-   * Close permission editor.
-   */
   const closePermissions = () => {
     setSelectedUser(null);
     setPermissions([]);
   };
 
-  /*
-   * Check whether currently selected user
-   * has a specific permission.
-   */
   const hasSelectedPermission = (resource: string, action: string) => {
     const permission = permissions.find((item) => item.resource === resource);
 
     return permission?.actions.includes(action) ?? false;
   };
 
-  /*
-   * Toggle permission.
-   */
   const togglePermission = (resource: string, action: string) => {
     if (!canManagePermissions) {
       return;
@@ -196,9 +157,6 @@ export default function UsersPage() {
     setPermissions((current) => {
       const existing = current.find((item) => item.resource === resource);
 
-      /*
-       * Resource doesn't exist yet.
-       */
       if (!existing) {
         return [
           ...current,
@@ -215,17 +173,10 @@ export default function UsersPage() {
         ? existing.actions.filter((item) => item !== action)
         : [...existing.actions, action];
 
-      /*
-       * No actions remaining.
-       * Remove the resource permission completely.
-       */
       if (updatedActions.length === 0) {
         return current.filter((item) => item.resource !== resource);
       }
 
-      /*
-       * Update resource permission.
-       */
       return current.map((item) =>
         item.resource === resource
           ? {
@@ -265,31 +216,13 @@ export default function UsersPage() {
       setSaving(true);
       setError("");
 
-      /*
-       * IMPORTANT:
-       *
-       * Backend expects:
-       *
-       * {
-       *   permissions: [...]
-       * }
-       */
       const response = await api.patch(
         `/user/${selectedUser._id}/permissions`,
         permissions,
       );
 
-      /*
-       * Use backend response if it returns
-       * the updated user.
-       *
-       * Otherwise use local permissions.
-       */
       const updatedPermissions = response.data?.permissions ?? permissions;
 
-      /*
-       * Update users list.
-       */
       setUsers((current) =>
         current.map((user) =>
           user._id === selectedUser._id
@@ -301,9 +234,6 @@ export default function UsersPage() {
         ),
       );
 
-      /*
-       * Close editor.
-       */
       closePermissions();
     } catch (error: any) {
       console.error(error);
@@ -316,16 +246,10 @@ export default function UsersPage() {
     }
   };
 
-  /*
-   * Wait until logged-in user is loaded.
-   */
   if (!currentUser) {
     return <p>Loading...</p>;
   }
 
-  /*
-   * User doesn't have USERS:READ.
-   */
   if (!canViewUsers) {
     return (
       <div>
@@ -498,11 +422,7 @@ export default function UsersPage() {
               </div>
             </div>
 
-            <button
-              onClick={closePermissions}
-              style={secondaryButtonStyle}
-              disabled={saving}
-            >
+            <button onClick={closePermissions} disabled={saving}>
               Close
             </button>
           </div>
@@ -599,11 +519,7 @@ export default function UsersPage() {
               marginTop: "14px",
             }}
           >
-            <button
-              onClick={closePermissions}
-              style={secondaryButtonStyle}
-              disabled={saving}
-            >
+            <button onClick={closePermissions} disabled={saving}>
               Cancel
             </button>
 
@@ -643,13 +559,4 @@ const buttonStyle: React.CSSProperties = {
   cursor: "pointer",
   fontSize: "12px",
   fontWeight: 600,
-};
-
-const secondaryButtonStyle: React.CSSProperties = {
-  padding: "6px 10px",
-  border: "1px solid #ccc",
-  backgroundColor: "#f5f5f5",
-  color: "#444",
-  cursor: "pointer",
-  fontSize: "12px",
 };

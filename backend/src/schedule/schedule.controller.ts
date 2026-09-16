@@ -18,11 +18,21 @@ import { PermissionGuard } from 'src/permission/guards/permission.guard';
 import { RequirePermission } from 'src/permission/decorator/permission.decorator';
 import { PermissionAction, PermissionResource } from 'src/permission/enums/permission.enum';
 
-// @Public()
 @Controller('schedule')
 @UseGuards(PermissionGuard)
 export class ScheduleController {
   constructor(private readonly scheduleService: ScheduleService) {}
+
+
+  @Get('search')
+  search(@Query() searchScheduleDto: SearchScheduleDto) {
+    return this.scheduleService.search(searchScheduleDto);
+  }
+  @Get(':id')
+  findById(@Param('id') id: string) {
+    return this.scheduleService.findById(id);
+  }
+
 
   @Post()
   @RequirePermission(PermissionResource.SCHEDULES, PermissionAction.CREATE)
@@ -36,18 +46,12 @@ export class ScheduleController {
     return this.scheduleService.findAll();
   }
 
-  @Public()
-  @Get('search')
-  search(@Query() searchScheduleDto: SearchScheduleDto) {
-    return this.scheduleService.search(searchScheduleDto);
+  @Delete(':id')
+  @RequirePermission(PermissionResource.SCHEDULES, PermissionAction.DELETE)
+  remove(@Param('id') id: string) {
+    return this.scheduleService.remove(id);
   }
-
-  @Get(':id')
-  @RequirePermission(PermissionResource.SCHEDULES, PermissionAction.READ)
-  findById(@Param('id') id: string) {
-    return this.scheduleService.findById(id);
-  }
-
+  
   // @Patch(':id')
   // update(
   //   @Param('id') id: string,
@@ -59,9 +63,7 @@ export class ScheduleController {
   //   );
   // }
 
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.scheduleService.remove(id);
-  // }
+
+
 
 }

@@ -4,7 +4,7 @@ function Home() {
   const user = JSON.parse(localStorage.getItem("user"));
 
   return (
-    <div style={{ margin: "5em auto" }}>
+    <div style={{ margin: "1em auto", minWidth: "80%" }}>
       {user && (
         <div>
           <SearchForm />

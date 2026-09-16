@@ -6,12 +6,16 @@ import {
   Param,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 
 import { TrainService } from './train.service';
 import { CreateTrainDto } from './dto/create-train.dto';
 import { UpdateTrainDto } from './dto/update-train.dto';
 import { Public } from 'src/auth/decorators/public.decorator';
+import { PermissionGuard } from 'src/permission/guards/permission.guard';
+import { PermissionAction, PermissionResource } from 'src/permission/enums/permission.enum';
+import { RequirePermission } from 'src/permission/decorator/permission.decorator';
 
 // @Public()
 @Controller('train')
@@ -48,8 +52,10 @@ export class TrainController {
   //   );
   // }
 
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.trainService.remove(id);
-  // }
+  @UseGuards(PermissionGuard)
+  @RequirePermission(PermissionResource.TRAINS, PermissionAction.DELETE)
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.trainService.remove(id);
+  }
 }

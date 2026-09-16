@@ -104,16 +104,12 @@ function SearchResults() {
 
           <div>{search.date}</div>
         </div>
-
-        <button onClick={() => navigate("/")}>Modify Search</button>
       </div>
 
       {/* Results */}
       {results.length === 0 ? (
         <div>
           <p>No trains found for this journey.</p>
-
-          <button onClick={() => navigate("/")}>Modify Search</button>
         </div>
       ) : (
         <div>
@@ -137,15 +133,13 @@ function SearchResults() {
                     justifyContent: "space-between",
                   }}
                 >
-                  <strong>
-                    {schedule.train?.name || "Train"}
+                  <strong>{schedule.train?.name || "Train"}</strong>
+                  {schedule.train?.trainNumber && (
+                    <span> # {schedule.train.trainNumber}</span>
+                  )}
 
-                    {schedule.train?.number && (
-                      <span> ({schedule.train.number})</span>
-                    )}
-                  </strong>
-
-                  <span>Runs On: M T W T F S S</span>
+                  <span>Runs On: {}</span>
+                  <button>View Schedule</button>
                 </div>
 
                 {/* Journey */}
@@ -230,9 +224,10 @@ function SearchResults() {
                   <div
                     style={{
                       display: "flex",
-                      justifyContent: "space-between",
+                      // justifyContent: "space-between",
                       alignItems: "center",
                       marginTop: "15px",
+                      gap: "10px",
                     }}
                   >
                     {/* Seat Availability */}
@@ -244,8 +239,10 @@ function SearchResults() {
                         <small>Availability unavailable</small>
                       ) : (
                         <small>
-                          <strong>{availableSeats}</strong>{" "}
-                          {availableSeats === 1 ? "seat" : "seats"} available
+                          AVL
+                          {availableSeats === 1 ? " seat" : " seats"}
+                          {": "}
+                          <strong>{availableSeats}</strong>
                         </small>
                       )}
                     </div>
@@ -261,7 +258,7 @@ function SearchResults() {
                         })
                       }
                     >
-                      Book Ticket
+                      Book Now
                     </button>
                   </div>
                 </div>

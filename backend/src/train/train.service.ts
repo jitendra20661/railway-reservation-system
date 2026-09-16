@@ -13,7 +13,6 @@ import {
 } from './schemas/train.schema';
 
 import { CreateTrainDto } from './dto/create-train.dto';
-import { UpdateTrainDto } from './dto/update-train.dto';
 
 @Injectable()
 export class TrainService {
@@ -80,17 +79,16 @@ export class TrainService {
   //   return train;
   // }
 
-  // async remove(id: string) {
-  //   const train = await this.trainModel
-  //     .findById(id)
-  //     .exec();
+  async remove(id: string) {
+    const train = await this.trainModel
+      .findById(id)
+      .exec();
 
-  //   if (!train) {
-  //     throw new NotFoundException('Train not found');
-  //   }
+    if (!train) {
+      throw new NotFoundException('Train not found');
+    }
 
-  //   train.isActive = false;
-
-  //   return train.save();
-  // }
+    train.isActive = false;
+    return train.save();
+  }
 }
