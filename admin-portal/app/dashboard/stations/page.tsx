@@ -175,62 +175,77 @@ export default function StationsPage() {
                   </td>
                 </tr>
               ) : (
-                filteredStations.map((station) => (
-                  <tr key={station._id}>
-                    <td style={styles.td}>
-                      <strong>{station.stationCode}</strong>
-                    </td>
+                filteredStations.map((station) => {
+                  // const isInactive = !station.isActive;
+                  return (
+                    <tr
+                      key={station._id}
+                      style={{
+                        backgroundColor: !station.isActive ? "#f7f7f7" : "#fff",
+                        color: !station.isActive ? "#888" : "#111",
+                      }}
+                    >
+                      <td style={styles.td}>
+                        <strong>{station.stationCode}</strong>
+                      </td>
 
-                    <td style={styles.td}>{station.name}</td>
+                      <td style={styles.td}>{station.name}</td>
 
-                    <td style={styles.td}>{station.city}</td>
+                      <td style={styles.td}>{station.city}</td>
 
-                    <td style={styles.td}>{station.state}</td>
+                      <td style={styles.td}>{station.state}</td>
 
-                    <td style={styles.td}>{station.distanceFromRoha} km</td>
+                      <td style={styles.td}>{station.distanceFromRoha} km</td>
 
-                    <td style={styles.td}>
-                      {station.geolocation ? (
-                        <span style={styles.coordinates}>
-                          {station.geolocation.latitude.toFixed(4)},{" "}
-                          {station.geolocation.longitude.toFixed(4)}
+                      <td style={styles.td}>
+                        {station.geolocation ? (
+                          <span style={styles.coordinates}>
+                            {station.geolocation.latitude.toFixed(4)},{" "}
+                            {station.geolocation.longitude.toFixed(4)}
+                          </span>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
+
+                      <td style={styles.td}>
+                        <span
+                          style={
+                            station.isActive ? styles.active : styles.inactive
+                          }
+                        >
+                          {station.isActive ? "Active" : "Inactive"}
                         </span>
-                      ) : (
-                        "-"
-                      )}
-                    </td>
+                      </td>
 
-                    <td style={styles.td}>
-                      <span>{station.isActive ? "ACTIVE" : "INACTIVE"}</span>
-                    </td>
+                      <td style={styles.td}>
+                        <div style={styles.actions}>
+                          {canUpdateStations && station.isActive && (
+                            <button
+                              style={styles.editButton}
+                              onClick={() =>
+                                router.push(
+                                  `/dashboard/stations/edit/${station._id}`,
+                                )
+                              }
+                            >
+                              Edit
+                            </button>
+                          )}
 
-                    <td style={styles.td}>
-                      <div style={styles.actions}>
-                        {canUpdateStations && (
-                          <button
-                            style={styles.editButton}
-                            onClick={() =>
-                              router.push(
-                                `/dashboard/stations/${station._id}/edit`,
-                              )
-                            }
-                          >
-                            Edit
-                          </button>
-                        )}
-
-                        {canDeleteStations && (
-                          <button
-                            style={styles.deleteButton}
-                            onClick={() => handleDelete(station._id)}
-                          >
-                            Delete
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                          {canDeleteStations && station.isActive && (
+                            <button
+                              style={styles.deleteButton}
+                              onClick={() => handleDelete(station._id)}
+                            >
+                              Delete
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -316,7 +331,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
 
   td: {
-    padding: "13px 14px",
+    padding: "8px 12px",
+
     borderBottom: "1px solid #eee",
     whiteSpace: "nowrap",
   },
@@ -364,5 +380,21 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: "12px",
     fontSize: "13px",
     color: "#777",
+  },
+
+  active: {
+    // display: "inline-block",
+    padding: "4px 8px",
+    background: "#e8f5e9",
+    color: "#26733a",
+    fontSize: "12px",
+  },
+
+  inactive: {
+    // display: "inline-block",
+    padding: "4px 8px",
+    background: "#f5e8e8ff",
+    color: "red",
+    fontSize: "12px",
   },
 };

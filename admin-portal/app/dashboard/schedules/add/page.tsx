@@ -25,17 +25,17 @@ type Station = {
 type Stop = {
   stationId: string;
   arrivalTime: string;
-  departureTime: string;
+  waitTime: string;
 };
 
 const days = [
-  { label: "M", name: "Monday", value: 0 },
-  { label: "T", name: "Tuesday", value: 1 },
-  { label: "W", name: "Wednesday", value: 2 },
-  { label: "T", name: "Thursday", value: 3 },
-  { label: "F", name: "Friday", value: 4 },
-  { label: "S", name: "Saturday", value: 5 },
-  { label: "S", name: "Sunday", value: 6 },
+  { label: "Mon", name: "Monday", value: 0 },
+  { label: "Tue", name: "Tuesday", value: 1 },
+  { label: "Wed", name: "Wednesday", value: 2 },
+  { label: "Thu", name: "Thursday", value: 3 },
+  { label: "Fri", name: "Friday", value: 4 },
+  { label: "Sat", name: "Saturday", value: 5 },
+  { label: "Sun", name: "Sunday", value: 6 },
 ];
 
 export default function AddSchedulePage() {
@@ -43,7 +43,6 @@ export default function AddSchedulePage() {
 
   const [trains, setTrains] = useState<Train[]>([]);
   const [stations, setStations] = useState<Station[]>([]);
-
   const [trainId, setTrainId] = useState("");
   const [direction, setDirection] = useState("ROHA_TO_THOKUR");
 
@@ -51,12 +50,12 @@ export default function AddSchedulePage() {
     {
       stationId: "",
       arrivalTime: "",
-      departureTime: "",
+      waitTime: "",
     },
     {
       stationId: "",
       arrivalTime: "",
-      departureTime: "",
+      waitTime: "",
     },
   ]);
 
@@ -65,7 +64,6 @@ export default function AddSchedulePage() {
   ]);
 
   const [status, setStatus] = useState("ACTIVE");
-
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -113,7 +111,7 @@ export default function AddSchedulePage() {
       {
         stationId: "",
         arrivalTime: "",
-        departureTime: "",
+        waitTime: "",
       },
     ]);
   };
@@ -142,6 +140,33 @@ export default function AddSchedulePage() {
       .join("");
   };
 
+  const calculateDepartureTime = (arrivalTime: string, waitTime: string) => {
+    if (!arrivalTime || !waitTime) {
+      return undefined;
+    }
+
+    const [hours, minutes] = arrivalTime.split(":").map(Number);
+    const waitMinutes = Number(waitTime);
+
+    if (
+      Number.isNaN(hours) ||
+      Number.isNaN(minutes) ||
+      Number.isNaN(waitMinutes) ||
+      waitMinutes < 0
+    ) {
+      return undefined;
+    }
+
+    const totalMinutes = hours * 60 + minutes + waitMinutes;
+
+    const departureHours = Math.floor(totalMinutes / 60) % 24;
+    const departureMinutes = totalMinutes % 60;
+
+    return `${String(departureHours).padStart(2, "0")}:${String(
+      departureMinutes,
+    ).padStart(2, "0")}`;
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -162,6 +187,16 @@ export default function AddSchedulePage() {
       return;
     }
 
+    if (
+      stops.some(
+        (stop) =>
+          !stop.arrivalTime || !stop.waitTime || Number(stop.waitTime) < 0,
+      )
+    ) {
+      setError("Please enter arrival time and wait time for every stop.");
+      return;
+    }
+
     if (selectedDays.length === 0) {
       setError("Please select at least one operating day.");
       return;
@@ -175,8 +210,11 @@ export default function AddSchedulePage() {
         direction,
         stops: stops.map((stop) => ({
           stationId: stop.stationId,
-          arrivalTime: stop.arrivalTime || undefined,
-          departureTime: stop.departureTime || undefined,
+          arrivalTime: stop.arrivalTime,
+          departureTime: calculateDepartureTime(
+            stop.arrivalTime,
+            stop.waitTime,
+          ),
         })),
         operatingDays: getOperatingDays(),
         status,
@@ -208,7 +246,6 @@ export default function AddSchedulePage() {
         maxWidth: "800px",
       }}
     >
-      {/* Header */}
       <div
         style={{
           display: "flex",
@@ -218,16 +255,8 @@ export default function AddSchedulePage() {
         }}
       >
         <h2 style={{ margin: 0 }}>Add Schedule</h2>
-
-        <button
-          type="button"
-          onClick={() => router.push("/dashboard/schedules")}
-        >
-          Back
-        </button>
       </div>
 
-      {/* Error */}
       {error && (
         <div
           style={{
@@ -244,7 +273,6 @@ export default function AddSchedulePage() {
       )}
 
       <form onSubmit={handleSubmit}>
-        {/* Train + Direction */}
         <div
           style={{
             border: "1px solid #d6dbe1",
@@ -259,7 +287,6 @@ export default function AddSchedulePage() {
               gap: "14px",
             }}
           >
-            {/* Train */}
             <div>
               <label
                 htmlFor="train"
@@ -293,7 +320,6 @@ export default function AddSchedulePage() {
               </select>
             </div>
 
-            {/* Direction */}
             <div>
               <label
                 htmlFor="direction"
@@ -325,7 +351,7 @@ export default function AddSchedulePage() {
           </div>
         </div>
 
-        {/* Stops */}
+        {/* ========== Stops Container ========== */}
         <div
           style={{
             border: "1px solid #d6dbe1",
@@ -333,7 +359,6 @@ export default function AddSchedulePage() {
             marginBottom: "10px",
           }}
         >
-          {/* Stops Header */}
           <div
             style={{
               display: "flex",
@@ -356,7 +381,6 @@ export default function AddSchedulePage() {
             </button>
           </div>
 
-          {/* Table Header */}
           <div
             style={{
               display: "grid",
@@ -372,11 +396,10 @@ export default function AddSchedulePage() {
           >
             <strong>Station</strong>
             <strong>Arrival</strong>
-            <strong>Departure</strong>
+            <strong>Wait Time</strong>
             <strong></strong>
           </div>
 
-          {/* Stop Rows */}
           {stops.map((stop, index) => (
             <div
               key={index}
@@ -389,7 +412,6 @@ export default function AddSchedulePage() {
                 borderBottom: "1px solid #eee",
               }}
             >
-              {/* Station */}
               <select
                 value={stop.stationId}
                 onChange={(e) => updateStop(index, "stationId", e.target.value)}
@@ -399,16 +421,26 @@ export default function AddSchedulePage() {
                   boxSizing: "border-box",
                 }}
               >
-                <option value="">Select station</option>
+                <option value="" disabled>
+                  Select station
+                </option>
 
-                {stations.map((station) => (
-                  <option key={station._id} value={station._id}>
-                    {station.stationCode} - {station.name}
-                  </option>
-                ))}
+                {stations
+                  .filter(
+                    (station) =>
+                      !stops.some(
+                        (otherStop, otherIndex) =>
+                          otherIndex !== index &&
+                          otherStop.stationId === station._id,
+                      ),
+                  )
+                  .map((station) => (
+                    <option key={station._id} value={station._id}>
+                      {station.stationCode} - {station.name}
+                    </option>
+                  ))}
               </select>
 
-              {/* Arrival */}
               <input
                 type="time"
                 value={stop.arrivalTime}
@@ -422,13 +454,11 @@ export default function AddSchedulePage() {
                 }}
               />
 
-              {/* Departure */}
               <input
-                type="time"
-                value={stop.departureTime}
-                onChange={(e) =>
-                  updateStop(index, "departureTime", e.target.value)
-                }
+                type="number"
+                min="0"
+                value={stop.waitTime}
+                onChange={(e) => updateStop(index, "waitTime", e.target.value)}
                 style={{
                   width: "100%",
                   padding: "5px",
@@ -436,7 +466,6 @@ export default function AddSchedulePage() {
                 }}
               />
 
-              {/* Remove */}
               <button
                 type="button"
                 onClick={() => removeStop(index)}
@@ -451,7 +480,7 @@ export default function AddSchedulePage() {
           ))}
         </div>
 
-        {/* Operating Days + Status */}
+        {/* ==========Operating Days Container========== */}
         <div
           style={{
             border: "1px solid #d6dbe1",
@@ -467,7 +496,6 @@ export default function AddSchedulePage() {
               alignItems: "center",
             }}
           >
-            {/* Operating Days */}
             <div>
               <div
                 style={{
@@ -495,9 +523,10 @@ export default function AddSchedulePage() {
                       title={day.name}
                       onClick={() => toggleDay(day.value)}
                       style={{
-                        width: "28px",
-                        height: "28px",
-                        padding: 0,
+                        // width: "28px",
+                        // height: "28px",
+                        padding: 5,
+                        marginRight: 5,
                         border: "1px solid",
                         borderColor: isSelected ? "#b9d8bf" : "#ddd",
                         backgroundColor: isSelected ? "#eef8f0" : "#f5f5f5",
@@ -523,7 +552,6 @@ export default function AddSchedulePage() {
               </div>
             </div>
 
-            {/* Status */}
             <div>
               <div
                 style={{
@@ -550,7 +578,6 @@ export default function AddSchedulePage() {
                   }}
                 >
                   <option value="ACTIVE">Active</option>
-
                   <option value="INACTIVE">Inactive</option>
                 </select>
 
@@ -568,7 +595,6 @@ export default function AddSchedulePage() {
           </div>
         </div>
 
-        {/* Submit */}
         <button
           type="submit"
           disabled={saving}

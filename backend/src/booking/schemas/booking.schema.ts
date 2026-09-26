@@ -64,5 +64,5 @@ export class Booking {
   status: BookingStatus;
 }
 
-export const BookingSchema =
-  SchemaFactory.createForClass(Booking);
+
+export const BookingSchema = SchemaFactory.createForClass(Booking);

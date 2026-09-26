@@ -9,6 +9,6 @@ export enum PermissionResource {
   TRAINS = 'TRAINS',
   STATIONS = 'STATIONS',
   SCHEDULES = 'SCHEDULES',
-  BOOKING='BOOKING',
+  BOOKING='BOOKINGS',
   USERS = 'USERS',
 }

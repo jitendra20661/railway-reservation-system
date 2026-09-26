@@ -35,6 +35,7 @@ function Register() {
         name,
         email,
         password,
+        isActive: true,
       });
 
       alert("Registration successful!");

@@ -198,28 +198,6 @@ function SearchResults() {
                     </div>
                   </div>
 
-                  {/* 
-                  Classes
-                  Will be implemented later.
-
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "8px",
-                      marginTop: "15px",
-                      paddingTop: "10px",
-                      borderTop: "1px solid #eee",
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    <ClassOption label="Sleeper (SL)" />
-                    <ClassOption label="AC 3 Economy (3E)" />
-                    <ClassOption label="AC 3 Tier (3A)" />
-                    <ClassOption label="AC 2 Tier (2A)" />
-                    <ClassOption label="AC First Class (1A)" />
-                  </div>
-                  */}
-
                   {/* Footer */}
                   <div
                     style={{

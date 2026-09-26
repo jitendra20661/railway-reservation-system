@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import api from "../../../services/api";
 import { useRouter } from "next/navigation";
+import { getUser, hasPermission } from "@/services/auth";
+import { ACTION, RESOURCE } from "@/services/permissions";
+import { Roles } from "@/services/roles";
 
 type Station = {
   _id: string;
@@ -31,13 +34,34 @@ type Schedule = {
   status: string;
 };
 
-const dayLabels = ["M", "T", "W", "T", "F", "S", "S"];
+const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export default function SchedulesPage() {
   const router = useRouter();
 
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const [search, setSearch] = useState("");
+
+  const currentUser = getUser();
+
+  const canViewTrains =
+    currentUser?.role === Roles.SUPER_ADMIN ||
+    hasPermission(RESOURCE.TRAINS, ACTION.READ);
+
+  const canCreateSchedules =
+    currentUser?.role === Roles.SUPER_ADMIN ||
+    hasPermission(RESOURCE.TRAINS, ACTION.CREATE);
+
+  const canUpdateTrains =
+    currentUser?.role === Roles.SUPER_ADMIN ||
+    hasPermission(RESOURCE.TRAINS, ACTION.UPDATE);
+
+  const canDeleteTrains =
+    currentUser?.role === Roles.SUPER_ADMIN ||
+    hasPermission(RESOURCE.TRAINS, ACTION.DELETE);
 
   useEffect(() => {
     const fetchSchedules = async () => {
@@ -56,6 +80,18 @@ export default function SchedulesPage() {
 
     fetchSchedules();
   }, []);
+
+  const filteredSchedules = schedules.filter((schedule) => {
+    const value = search.toLowerCase();
+
+    return (
+      schedule.trainId.name.toLowerCase().includes(value) ||
+      schedule.trainId.trainNumber.toLowerCase().includes(value) ||
+      schedule.stops.some((stop) =>
+        stop.stationId.name.toLowerCase().includes(value),
+      )
+    );
+  });
 
   const formatDirection = (direction: string) => {
     if (direction === "ROHA_TO_THOKUR") {
@@ -94,42 +130,50 @@ export default function SchedulesPage() {
   };
 
   return (
-    <div>
+    <div style={styles.page}>
       {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          // marginBottom: "14px",
-          maxWidth: "60%",
-          minWidth: "400px",
+      <div style={styles.header}>
+        <div>
+          <h1 style={styles.title}>Schedules</h1>
 
-          margin: "0px auto",
-        }}
-      >
-        <h2>Schedules</h2>
+          <p style={styles.subtitle}>Manage railway schedules.</p>
+        </div>
 
-        <button onClick={() => router.push("/dashboard/schedules/add")}>
-          Add Schedule
-        </button>
+        {canCreateSchedules && (
+          <button onClick={() => router.push("/dashboard/schedules/add")}>
+            + Add Schedule
+          </button>
+        )}
       </div>
+
+      {/* Search */}
+      <div style={styles.toolbar}>
+        <input
+          type="text"
+          placeholder="Search schedules..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={styles.searchInput}
+        />
+      </div>
+
+      {/* Error */}
+      {error && <div style={styles.error}>{error}</div>}
 
       {/* Empty State */}
       {schedules.length === 0 ? (
         <p>No schedules found.</p>
       ) : (
-        schedules.map((schedule) => (
+        filteredSchedules.map((schedule) => (
           <div
             key={schedule._id}
             style={{
               border: "1px solid #d6dbe1",
               padding: "10px 12px",
-              marginBottom: "8px",
-              maxWidth: "60%",
-              minWidth: "400px",
-
-              margin: "20px auto",
+              marginBottom: "20px",
+              // maxWidth: "60%",
+              // minWidth: "400px",
+              // margin: "20px auto",
             }}
           >
             {/* Train */}
@@ -229,10 +273,11 @@ export default function SchedulesPage() {
                 <span
                   style={{
                     marginRight: "3px",
+                    marginLeft: "3px",
                     color: "#666",
                   }}
                 >
-                  Days
+                  Runs:
                 </span>
 
                 {dayLabels.map((day, index) => {
@@ -243,8 +288,8 @@ export default function SchedulesPage() {
                       key={index}
                       title={isActive ? "Operating" : "Not operating"}
                       style={{
-                        width: "20px",
-                        height: "20px",
+                        // width: "20px",
+                        // height: "20px",
                         display: "inline-flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -254,6 +299,8 @@ export default function SchedulesPage() {
                         borderColor: isActive ? "#b9d8bf" : "#ddd",
                         backgroundColor: isActive ? "#eef8f0" : "#f5f5f5",
                         color: isActive ? "#276738" : "#999",
+                        padding: "2px",
+                        marginRight: "3px",
                       }}
                     >
                       {day}
@@ -330,3 +377,118 @@ export default function SchedulesPage() {
     </div>
   );
 }
+
+const styles: Record<string, React.CSSProperties> = {
+  page: {
+    width: "100%",
+  },
+
+  header: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "24px",
+  },
+
+  title: {
+    margin: 0,
+    fontSize: "24px",
+    fontWeight: 600,
+  },
+
+  subtitle: {
+    margin: "5px 0 0",
+    fontSize: "14px",
+    color: "#666",
+  },
+
+  tableContainer: {
+    border: "1px solid #ddd",
+    background: "#fff",
+    overflowX: "auto",
+  },
+
+  table: {
+    width: "100%",
+    borderCollapse: "collapse",
+    fontSize: "14px",
+  },
+
+  th: {
+    textAlign: "left",
+    padding: "13px 14px",
+    borderBottom: "1px solid #ddd",
+    background: "#fafafa",
+    fontWeight: 600,
+    whiteSpace: "nowrap",
+  },
+
+  td: {
+    padding: "8px 12px",
+    borderBottom: "1px solid #eee",
+    whiteSpace: "nowrap",
+  },
+
+  active: {
+    display: "inline-block",
+    padding: "4px 8px",
+    background: "#e8f5e9",
+    color: "#26733a",
+    fontSize: "12px",
+  },
+  inactive: {
+    // display: "inline-block",
+    padding: "4px 8px",
+    background: "#f5e8e8ff",
+    color: "red",
+    fontSize: "12px",
+  },
+
+  actions: {
+    display: "flex",
+    gap: "8px",
+  },
+
+  message: {
+    padding: "40px",
+    textAlign: "center",
+    color: "#666",
+  },
+
+  empty: {
+    padding: "40px",
+    textAlign: "center",
+    color: "#777",
+  },
+
+  error: {
+    marginBottom: "16px",
+    padding: "10px 12px",
+    border: "1px solid #e0b4b4",
+    background: "#fff5f5",
+    color: "#a33",
+    fontSize: "14px",
+  },
+
+  permissionBox: {
+    marginTop: "20px",
+    padding: "20px",
+    border: "1px solid #ddd",
+    color: "#666",
+  },
+
+  count: {
+    marginTop: "12px",
+    fontSize: "13px",
+    color: "#777",
+  },
+  searchInput: {
+    width: "320px",
+    height: "40px",
+    border: "1px solid #ccc",
+    padding: "0 12px",
+    fontSize: "14px",
+    outline: "none",
+    marginBottom: "15px",
+  },
+};

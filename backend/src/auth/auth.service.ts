@@ -5,6 +5,8 @@ import { UserService } from 'src/user/user.service';
 import { LoginUserDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
 import { permission } from 'process';
+import { RegisterDto } from './dto/register.dto';
+import { Role } from 'src/user/enums/role.enum';
 
 
 @Injectable()
@@ -15,23 +17,39 @@ export class AuthService {
   ) {}
 
   // Register a new user
-  async register(createUserDto: CreateUserDto) {
-    // 1. Check whether user already exists
-    const existingUser = await this.userService.findOne(createUserDto.email);
-    if (existingUser) {
-      throw new UnauthorizedException('User already exists');
-    }
-    // 2. Hash password
-    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+  // async register(createUserDto: CreateUserDto) {
+  //   // 1. Check whether user already exists
+  //   const existingUser = await this.userService.findOne(createUserDto.email);
+  //   if (existingUser) {
+  //     throw new UnauthorizedException('User already exists');
+  //   }
+  //   // 2. Hash password
+  //   const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
-    // 3. Create user with hashed password
-    const res = await this.userService.create({
-      ...createUserDto,
-      password: hashedPassword,
-    });
+  //   // 3. Create user with hashed password
+  //   const res = await this.userService.create({
+  //     ...createUserDto,
+  //     password: hashedPassword,
+  //   });
 
-    // 4. Return appropriate response
-    return res;
+  //   // 4. Return appropriate response
+  //   return res;
+  // }
+
+  async register(
+    name: string,
+    email: string,
+    password: string,
+    role: Role,
+    isActive: boolean,
+  ) {
+    return this.userService.createUser(
+      name,
+      email,
+      password,
+      role,
+      isActive,
+    );
   }
 
 

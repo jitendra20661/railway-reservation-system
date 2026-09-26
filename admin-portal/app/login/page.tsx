@@ -14,7 +14,7 @@ export default function Login() {
 
   const router = useRouter();
 
-  const handleLogin = async (e) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
@@ -37,7 +37,7 @@ export default function Login() {
       localStorage.setItem("user", JSON.stringify(user));
 
       router.push("/dashboard");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Admin login failed:", error);
 
       setError(error.response?.data?.message || "Invalid email or password.");

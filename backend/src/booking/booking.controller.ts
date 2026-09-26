@@ -3,6 +3,11 @@ import { Body, Controller, Get, Param, Post, Query, Req } from '@nestjs/common';
 import { BookingService } from './booking.service';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { JWTAuthGuard } from 'src/auth/guards/jwtauth.guard';
+import { PermissionGuard } from 'src/permission/guards/permission.guard';
+import { RequirePermission } from 'src/permission/decorator/permission.decorator';
+import { PermissionAction, PermissionResource } from 'src/permission/enums/permission.enum';
+import { BookingReportQueryDto } from './dto/booking-report-query.dto';
 
 @Controller('booking')
 export class BookingController {
@@ -39,10 +44,19 @@ export class BookingController {
   }
 
 
+  
   @Get('my-bookings')
   getMyBookings(@Req() req) {
     return this.bookingService.findBookingsByUserId(req.user.sub);
   }
+
+  @Get('report')
+  // @UseGuards(JWTAuthGuard, PermissionGuard)
+  @RequirePermission(PermissionResource.BOOKING, PermissionAction.READ)
+  getBookingReport(@Query() query: BookingReportQueryDto){
+    return this.bookingService.getBookingReport(query)
+  }
+
 
   // @Get('id:')
   // findBookingById(@Req() req) {
@@ -59,4 +73,6 @@ export class BookingController {
       req.user.sub,
     );
   }
+
+  
 }

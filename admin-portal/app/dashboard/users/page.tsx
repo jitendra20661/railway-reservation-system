@@ -4,17 +4,27 @@ import { useEffect, useState } from "react";
 
 import api from "../../../services/api";
 import { getUser, hasPermission } from "../../../services/auth";
-
 import { RESOURCE, ACTION } from "../../../services/permissions";
-
 import { Roles } from "@/services/roles";
+import { useRouter } from "next/navigation";
 
 type Permission = {
   resource: string;
   actions: string[];
 };
 
+// User returned by GET /user
 type User = {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  isActive: boolean;
+  permissions?: Permission[];
+};
+
+//current logged-in user. getUser() may not contain isActive in its stored object, so don't require it here.
+type CurrentUser = {
   _id: string;
   name: string;
   email: string;
@@ -39,6 +49,10 @@ const resources = [
     key: RESOURCE.USERS,
     label: "Users",
   },
+  {
+    key: RESOURCE.BOOKINGS,
+    label: "Bookings",
+  },
 ];
 
 const actions = [
@@ -61,8 +75,12 @@ const actions = [
 ];
 
 export default function UsersPage() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const router = useRouter();
 
+  //Current logged-in user. does NOT require isActive.
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+
+  // Users returned from backend. contains isActive.
   const [users, setUsers] = useState<User[]>([]);
 
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -70,14 +88,24 @@ export default function UsersPage() {
   const [permissions, setPermissions] = useState<Permission[]>([]);
 
   const [loading, setLoading] = useState(true);
+
   const [saving, setSaving] = useState(false);
+
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  const [search, setSearch] = useState("");
+
   const [error, setError] = useState("");
 
+  // Load current logged-in user.
   useEffect(() => {
     const user = getUser();
-
     setCurrentUser(user);
   }, []);
+
+  const canAddUsers =
+    currentUser?.role === Roles.SUPER_ADMIN ||
+    hasPermission(RESOURCE.USERS, ACTION.CREATE);
 
   const canViewUsers =
     currentUser?.role === Roles.SUPER_ADMIN ||
@@ -86,6 +114,10 @@ export default function UsersPage() {
   const canManagePermissions =
     currentUser?.role === Roles.SUPER_ADMIN ||
     hasPermission(RESOURCE.USERS, ACTION.UPDATE);
+
+  const canDeleteUsers =
+    currentUser?.role === Roles.SUPER_ADMIN ||
+    hasPermission(RESOURCE.USERS, ACTION.DELETE);
 
   useEffect(() => {
     if (!currentUser) {
@@ -117,12 +149,17 @@ export default function UsersPage() {
     }
   };
 
+  // Open permission editor.
   const openPermissions = (user: User) => {
     if (!canManagePermissions) {
       return;
     }
 
     if (user.role !== Roles.SUB_ADMIN) {
+      return;
+    }
+
+    if (!user.isActive) {
       return;
     }
 
@@ -138,11 +175,13 @@ export default function UsersPage() {
     );
   };
 
+  //Close permission editor.
   const closePermissions = () => {
     setSelectedUser(null);
     setPermissions([]);
   };
 
+  //   * Check whether selected user has a particular permission.
   const hasSelectedPermission = (resource: string, action: string) => {
     const permission = permissions.find((item) => item.resource === resource);
 
@@ -157,6 +196,9 @@ export default function UsersPage() {
     setPermissions((current) => {
       const existing = current.find((item) => item.resource === resource);
 
+      /*
+       * Resource doesn't exist yet.
+       */
       if (!existing) {
         return [
           ...current,
@@ -173,6 +215,10 @@ export default function UsersPage() {
         ? existing.actions.filter((item) => item !== action)
         : [...existing.actions, action];
 
+      /*
+       * Remove resource if no actions
+       * remain.
+       */
       if (updatedActions.length === 0) {
         return current.filter((item) => item.resource !== resource);
       }
@@ -198,17 +244,16 @@ export default function UsersPage() {
 
     if (!canManagePermissions) {
       setError("You do not have permission to update users.");
-
       return;
     }
 
-    /*
-     * Only SUB_ADMIN permissions can be changed
-     * from this screen.
-     */
     if (selectedUser.role !== Roles.SUB_ADMIN) {
       setError("Permissions can only be changed for SUB_ADMIN users.");
+      return;
+    }
 
+    if (!selectedUser.isActive) {
+      setError("Inactive users cannot have their permissions changed.");
       return;
     }
 
@@ -216,9 +261,16 @@ export default function UsersPage() {
       setSaving(true);
       setError("");
 
+      // console.log("permissions being sent:", permissions);
+      // console.log("RESOURCE:", RESOURCE);
+      // console.log("ACTION:", ACTION);
+      // console.log("resources:", resources);
+      // console.log("actions:", actions);
       const response = await api.patch(
         `/user/${selectedUser._id}/permissions`,
-        permissions,
+        {
+          permissions,
+        },
       );
 
       const updatedPermissions = response.data?.permissions ?? permissions;
@@ -238,18 +290,100 @@ export default function UsersPage() {
     } catch (error: any) {
       console.error(error);
 
-      setError(
-        error?.response?.data?.message || "Failed to update permissions.",
-      );
+      const message = error?.response?.data?.message;
+
+      if (Array.isArray(message)) {
+        setError(message.join(", "));
+      } else {
+        setError(message || "Failed to update permissions.");
+      }
     } finally {
       setSaving(false);
     }
   };
 
+  //Deactivate user.
+  const handleDeleteUser = async (user: User) => {
+    if (!canDeleteUsers) {
+      return;
+    }
+
+    if (user.role === Roles.SUPER_ADMIN) {
+      return;
+    }
+    //     * Already inactive.
+    if (!user.isActive) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Are you sure you want to deactivate ${user.name}?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeleting(user._id);
+      setError("");
+
+      await api.delete(`/user/${user._id}`);
+
+      // * IMPORTANT: This is a soft delete.
+      setUsers((current) =>
+        current.map((item) =>
+          item._id === user._id
+            ? {
+                ...item,
+                isActive: false,
+              }
+            : item,
+        ),
+      );
+
+      /*
+       * Close permission editor if this user was selected.
+       */
+      if (selectedUser?._id === user._id) {
+        closePermissions();
+      }
+    } catch (error: any) {
+      console.error(error);
+
+      const message = error?.response?.data?.message;
+
+      if (Array.isArray(message)) {
+        setError(message.join(", "));
+      } else {
+        setError(message || "Failed to deactivate user.");
+      }
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  /*
+   * Current user is loading.
+   */
   if (!currentUser) {
     return <p>Loading...</p>;
   }
 
+  const filteredUsers = users.filter((user) => {
+    const value = search.toLowerCase();
+
+    return (
+      // user.userCode.toLowerCase().includes(value) ||
+      user.name.toLowerCase().includes(value) ||
+      user.email.toLowerCase().includes(value) ||
+      user.role.toLowerCase().includes(value)
+    );
+  });
+
+  /*
+   * No USERS.READ permission.
+   */
   if (!canViewUsers) {
     return (
       <div>
@@ -261,38 +395,65 @@ export default function UsersPage() {
   }
 
   return (
-    <div>
-      {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "18px",
-        }}
-      >
-        <h2 style={{ margin: 0 }}>Users</h2>
-      </div>
+    <div style={styles.page}>
+      {/* ==========Header========== */}
+      <div style={styles.header}>
+        <div>
+          <h1 style={styles.title}>Users</h1>
 
-      {/* Error */}
-      {error && (
+          <p style={styles.subtitle}>Manage railway users</p>
+        </div>
+
+        {canAddUsers && (
+          <button
+            onClick={() => router.push("/dashboard/users/add")}
+            // style={styles.primaryButton}
+          >
+            + Add User
+          </button>
+        )}
+
+        {/* ==========ERROR========== */}
+        {error && (
+          <div
+            style={{
+              marginBottom: "15px",
+              padding: "10px",
+              border: "1px solid #e0a0a0",
+              backgroundColor: "#fff5f5",
+              color: "#b42318",
+              fontSize: "13px",
+            }}
+          >
+            {error}
+          </div>
+        )}
+      </div>
+      {/* ============USERS TABLE=========== */}
+      {/* Search */}
+      <div style={styles.toolbar}>
+        <input
+          type="text"
+          placeholder="Search user..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={styles.searchInput}
+        />
+      </div>
+      {loading ? (
+        <p>Loading users...</p>
+      ) : users.length === 0 ? (
         <div
           style={{
-            marginBottom: "15px",
-            padding: "10px",
-            border: "1px solid #e0a0a0",
-            backgroundColor: "#fff5f5",
-            color: "#b42318",
+            border: "1px solid #ddd",
+            padding: "20px",
+            textAlign: "center",
+            color: "#777",
             fontSize: "13px",
           }}
         >
-          {error}
+          No users found.
         </div>
-      )}
-
-      {/* Loading */}
-      {loading ? (
-        <p>Loading users...</p>
       ) : (
         <div
           style={{
@@ -320,60 +481,149 @@ export default function UsersPage() {
 
                 <th style={thStyle}>Role</th>
 
-                {canManagePermissions && <th style={thStyle}>Actions</th>}
+                <th style={thStyle}>Status</th>
+
+                {(canManagePermissions || canDeleteUsers) && (
+                  <th style={thStyle}>Actions</th>
+                )}
               </tr>
             </thead>
 
             <tbody>
-              {users.map((user) => (
-                <tr key={user._id}>
-                  <td style={tdStyle}>{user.name}</td>
+              {filteredUsers.map((user) => {
+                const isInactive = !user.isActive;
 
-                  <td style={tdStyle}>{user.email}</td>
+                return (
+                  <tr
+                    key={user._id}
+                    style={{
+                      backgroundColor: isInactive ? "#f7f7f7" : "#fff",
+                      color: isInactive ? "#888" : "#111",
+                    }}
+                  >
+                    {/* Name */}
 
-                  <td style={tdStyle}>
-                    <span
-                      style={{
-                        color:
-                          user.role === Roles.SUPER_ADMIN ? "#176b2c" : "#555",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {user.role}
-                    </span>
-                  </td>
-
-                  {canManagePermissions && (
                     <td style={tdStyle}>
-                      {user.role === Roles.SUB_ADMIN && (
-                        <button
-                          onClick={() => openPermissions(user)}
-                          style={buttonStyle}
-                        >
-                          Manage Permissions
-                        </button>
-                      )}
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                        }}
+                      >
+                        <span>{user.name}</span>
+                      </div>
+                    </td>
 
-                      {user.role === Roles.SUPER_ADMIN && (
-                        <span
+                    {/* Email */}
+
+                    <td style={tdStyle}>{user.email}</td>
+
+                    {/* Role */}
+
+                    <td style={tdStyle}>
+                      <span
+                        style={{
+                          color:
+                            user.role === Roles.SUPER_ADMIN
+                              ? "#176b2c"
+                              : isInactive
+                                ? "#888"
+                                : "#555",
+
+                          fontWeight: 600,
+                        }}
+                      >
+                        {user.role}
+                      </span>
+                    </td>
+
+                    {/* Status */}
+                    <td>
+                      <span
+                        style={user.isActive ? styles.active : styles.inactive}
+                      >
+                        {user.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+
+                    {/* Actions */}
+
+                    {(canManagePermissions || canDeleteUsers) && (
+                      <td style={tdStyle}>
+                        <div
                           style={{
-                            color: "#888",
-                            fontSize: "12px",
+                            display: "flex",
+                            gap: "6px",
+                            alignItems: "center",
                           }}
                         >
-                          Full access
-                        </span>
-                      )}
-                    </td>
-                  )}
-                </tr>
-              ))}
+                          {/* Manage Permissions */}
+
+                          {canManagePermissions &&
+                            user.role === Roles.SUB_ADMIN &&
+                            user.isActive && (
+                              <button
+                                onClick={() => openPermissions(user)}
+                                disabled={deleting === user._id}
+                                style={buttonStyle}
+                              >
+                                Manage Permissions
+                              </button>
+                            )}
+
+                          {/* SUPER_ADMIN */}
+
+                          {user.role === Roles.SUPER_ADMIN && (
+                            <span
+                              style={{
+                                color: "#888",
+                                fontSize: "12px",
+                              }}
+                            >
+                              Full access
+                            </span>
+                          )}
+
+                          {/* Delete */}
+
+                          {canDeleteUsers &&
+                            user.role !== Roles.SUPER_ADMIN &&
+                            user.isActive && (
+                              <button
+                                onClick={() => handleDeleteUser(user)}
+                                disabled={deleting === user._id}
+                              >
+                                {deleting === user._id
+                                  ? "Deleting..."
+                                  : "Delete"}
+                              </button>
+                            )}
+
+                          {/* Inactive */}
+
+                          {!user.isActive &&
+                            user.role !== Roles.SUPER_ADMIN && (
+                              <span
+                                style={{
+                                  color: "#999",
+                                  fontSize: "12px",
+                                }}
+                              >
+                                Deactivated
+                              </span>
+                            )}
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       )}
-
-      {/* Permission editor */}
+      {/* =========================Permission editor ========================= */}
       {selectedUser && canManagePermissions && (
         <div
           style={{
@@ -383,7 +633,8 @@ export default function UsersPage() {
             maxWidth: "700px",
           }}
         >
-          {/* Editor header */}
+          {/* Header */}
+
           <div
             style={{
               display: "flex",
@@ -427,6 +678,8 @@ export default function UsersPage() {
             </button>
           </div>
 
+          {/* Title */}
+
           <h4
             style={{
               margin: "0 0 10px",
@@ -436,12 +689,14 @@ export default function UsersPage() {
           </h4>
 
           {/* Permission matrix */}
+
           <div
             style={{
               border: "1px solid #ddd",
             }}
           >
-            {/* Header */}
+            {/* Matrix header */}
+
             <div
               style={{
                 display: "grid",
@@ -468,6 +723,7 @@ export default function UsersPage() {
             </div>
 
             {/* Resources */}
+
             {resources.map((resource) => (
               <div
                 key={resource.key}
@@ -511,6 +767,7 @@ export default function UsersPage() {
           </div>
 
           {/* Buttons */}
+
           <div
             style={{
               display: "flex",
@@ -543,7 +800,7 @@ const thStyle: React.CSSProperties = {
 };
 
 const tdStyle: React.CSSProperties = {
-  padding: "10px 12px",
+  padding: "8px 12px",
   borderBottom: "1px solid #eee",
 };
 
@@ -559,4 +816,53 @@ const buttonStyle: React.CSSProperties = {
   cursor: "pointer",
   fontSize: "12px",
   fontWeight: 600,
+};
+
+const styles: Record<string, React.CSSProperties> = {
+  page: {
+    width: "100%",
+  },
+
+  header: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "24px",
+  },
+
+  title: {
+    margin: 0,
+    fontSize: "24px",
+    fontWeight: 600,
+  },
+
+  active: {
+    // display: "inline-block",
+    padding: "2px 5px",
+    background: "#e8f5e9",
+    color: "#26733a",
+    fontSize: "12px",
+  },
+
+  inactive: {
+    // display: "inline-block",
+    background: "#f5e8e8ff",
+    color: "red",
+    fontSize: "12px",
+    padding: "2px 5px",
+  },
+  searchInput: {
+    width: "320px",
+    height: "40px",
+    border: "1px solid #ccc",
+    padding: "0 12px",
+    fontSize: "14px",
+    outline: "none",
+    marginBottom: "15px",
+  },
+  subtitle: {
+    margin: "5px 0 0",
+    fontSize: "14px",
+    color: "#666",
+  },
 };

@@ -6,7 +6,6 @@ import { Public } from 'src/auth/decorators/public.decorator';
 import { RequirePermission } from 'src/permission/decorator/permission.decorator';
 import { PermissionAction, PermissionResource } from 'src/permission/enums/permission.enum';
 
-// @Public()
 @Controller('station')
 export class StationController {
   constructor(private readonly stationService: StationService) {}
@@ -28,12 +27,11 @@ export class StationController {
     return this.stationService.findById(id);
   }
 
-  // TODO: later
-  // @Patch(':id')
-  // @RequirePermission(PermissionResource.STATION, PermissionAction.UPDATE)
-  // update(@Param('id') id: string, @Body() updateStationDto: UpdateStationDto) {
-  //   return this.stationService.update(+id, updateStationDto);
-  // }
+  @Patch(':id')
+  @RequirePermission(PermissionResource.STATIONS, PermissionAction.UPDATE)
+  update(@Param('id') id: string, @Body() updateStationDto: UpdateStationDto) {
+    return this.stationService.update(id, updateStationDto);
+  }
 
   @Delete(':id')
   @RequirePermission(PermissionResource.STATIONS, PermissionAction.DELETE)

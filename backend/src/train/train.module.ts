@@ -6,6 +6,8 @@ import { TrainService } from './train.service';
 import { Train, TrainSchema } from './schemas/train.schema';
 import { UserModule } from 'src/user/user.module';
 import { User, UserSchema } from 'src/user/schemas/user.schema';
+import { Schedule, ScheduleSchema } from 'src/schedule/schemas/schedule.schema';
+import { Booking, BookingSchema } from 'src/booking/schemas/booking.schema';
 
 @Module({
   imports: [
@@ -17,6 +19,14 @@ import { User, UserSchema } from 'src/user/schemas/user.schema';
       {
         name: User.name,
         schema: UserSchema,
+      },
+      {
+        name: Booking.name,
+        schema: BookingSchema,
+      },
+      {
+        name: Schedule.name,
+        schema: ScheduleSchema,
       },
 
     ]),

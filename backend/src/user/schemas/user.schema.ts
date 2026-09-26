@@ -51,8 +51,8 @@ export class User {
   @Prop({type: Boolean,default: true,})
   isActive: boolean;
 
-  @Prop({type: Types.ObjectId,ref: 'User',default: null,})
-  createdBy: Types.ObjectId | null;
+  // @Prop({type: Types.ObjectId,ref: 'User',default: null,})
+  // createdBy: Types.ObjectId | null;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

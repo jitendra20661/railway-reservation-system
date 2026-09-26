@@ -102,14 +102,6 @@ export default function AddTrainPage() {
 
           <p style={styles.subtitle}>Add a new railway train</p>
         </div>
-
-        <button
-          type="button"
-          onClick={() => router.push("/dashboard/trains")}
-          style={styles.secondaryButton}
-        >
-          Back
-        </button>
       </div>
 
       {/* Form */}
@@ -123,7 +115,7 @@ export default function AddTrainPage() {
               name="trainNumber"
               value={form.trainNumber}
               onChange={handleChange}
-              //   placeholder="e.g. 10101"
+              placeholder="e.g. 10101"
               style={styles.input}
             />
           </div>
@@ -136,7 +128,7 @@ export default function AddTrainPage() {
               name="name"
               value={form.name}
               onChange={handleChange}
-              //   placeholder="e.g. Konkan Express"
+              // placeholder="e.g. Konkan Express"
               style={styles.input}
             />
           </div>
@@ -199,18 +191,12 @@ export default function AddTrainPage() {
         {/* Actions */}
         <div style={styles.actions}>
           <button
-            type="button"
-            onClick={() => router.push("/dashboard/trains")}
-            style={styles.secondaryButton}
-          >
-            Cancel
-          </button>
-
-          <button
             type="submit"
             disabled={loading}
             style={{
-              ...styles.primaryButton,
+              width: "100%",
+              height: "35px",
+              fontWeight: "500",
               opacity: loading ? 0.6 : 1,
               cursor: loading ? "not-allowed" : "pointer",
             }}
@@ -225,8 +211,8 @@ export default function AddTrainPage() {
 
 const styles: Record<string, React.CSSProperties> = {
   page: {
-    maxWidth: "900px",
-    margin: "0 auto",
+    maxWidth: "700px",
+    // margin: "0 auto",
   },
 
   header: {
@@ -250,8 +236,9 @@ const styles: Record<string, React.CSSProperties> = {
 
   form: {
     border: "1px solid #ddd",
-    padding: "24px",
     background: "#fff",
+    borderRadius: "6px",
+    padding: "20px",
   },
 
   grid: {
@@ -267,14 +254,18 @@ const styles: Record<string, React.CSSProperties> = {
   },
 
   input: {
-    width: "85%",
-    height: "30px",
+    width: "100%",
+    height: "35px",
     boxSizing: "border-box",
     border: "1px solid #ccc",
-    padding: "0 5px",
+    // padding: "0 5px",
+    padding: "10px",
     fontSize: "14px",
     outline: "none",
     background: "#fff",
+
+    // width: "100%",
+    borderRadius: "4px",
   },
 
   activeRow: {

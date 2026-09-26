@@ -60,10 +60,6 @@ export default function DashboardLayout({
         >
           <Link href="/dashboard">Dashboard</Link>
 
-          {hasPermission(RESOURCE.SCHEDULES, ACTION.READ) && (
-            <Link href="/dashboard/schedules">Schedules</Link>
-          )}
-
           {hasPermission(RESOURCE.TRAINS, ACTION.READ) && (
             <Link href="/dashboard/trains">Trains</Link>
           )}
@@ -72,8 +68,16 @@ export default function DashboardLayout({
             <Link href="/dashboard/stations">Stations</Link>
           )}
 
+          {hasPermission(RESOURCE.SCHEDULES, ACTION.READ) && (
+            <Link href="/dashboard/schedules">Schedules</Link>
+          )}
+
           {hasPermission(RESOURCE.USERS, ACTION.READ) && (
             <Link href="/dashboard/users">Users</Link>
+          )}
+
+          {hasPermission(RESOURCE.BOOKINGS, ACTION.READ) && (
+            <Link href="/dashboard/bookings">Bookings</Link>
           )}
         </nav>
 

@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { PermissionService } from './permission.service';
-import { PermissionController } from './permission.controller';
+// import { PermissionService } from './permission.service';
+// import { PermissionController } from './permission.controller';
 
 @Module({
-  controllers: [PermissionController],
-  providers: [PermissionService],
+  controllers: [],
+  providers: [],
 })
 export class PermissionModule {}

@@ -12,6 +12,7 @@ import {
 } from './schemas/station.schema';
 
 import { CreateStationDto } from './dto/create-station.dto';
+import { UpdateStationDto } from './dto/update-station.dto';
 
 @Injectable()
 export class StationService {
@@ -55,63 +56,51 @@ export class StationService {
   }
 
   async findByCode(stationCode: string) {
-  return this.stationModel
-    .findOne({
-      stationCode: stationCode.toUpperCase(),
-      isActive: true,
-    })
-    .exec();
-}
+    return this.stationModel
+      .findOne({
+        stationCode: stationCode.toUpperCase(),
+        isActive: true,
+      })
+      .exec();
+  }
 
-  // async update(
-  //   id: string,
-  //   updateStationDto: UpdateStationDto,
-  // ) {
-  //   const station = await this.stationModel
-  //     .findByIdAndUpdate(
-  //       id,
-  //       updateStationDto,
-  //       {
-  //         new: true,
-  //         runValidators: true,
-  //       },
-  //     )
-  //     .exec();
-
-  //   if (!station) {
-  //     throw new NotFoundException('Station not found');
-  //   }
-
-  //   return station;
-  // }
-
-
-
-
-  // async search(query: string) {
-  //   return this.stationModel
-  //     .find({
-  //       isActive: true,
-  //       $or: [
-  //         { code: { $regex: query, $options: 'i' } },
-  //         { name: { $regex: query, $options: 'i' } },
-  //         { city: { $regex: query, $options: 'i' } },
-  //       ],
-  //     })
-  //     .limit(10)
-  //     .exec();
-  // }
-
-
-    async remove(id: string) {
-    const station = await this.stationModel.findById(id).exec();
+  async update(
+    id: string,
+    updateStationDto: UpdateStationDto,
+  ) {
+    const station = await this.stationModel
+      .findByIdAndUpdate(
+        id,
+        updateStationDto,
+        {
+          new: true,
+          runValidators: true,
+        },
+      )
+      .exec();
 
     if (!station) {
       throw new NotFoundException('Station not found');
     }
 
-    station.isActive = false;
+    return station;
+  }
 
+
+
+
+
+
+
+  async remove(id: string) {
+    
+    const station = await this.stationModel.findById(id).exec();
+
+    if (!station) {
+      throw new NotFoundException('Station not found');
+    }
+    
+    station.isActive = false;
     return station.save();
   }
 }

@@ -19,12 +19,15 @@ import { UpdateScheduleDto } from './dto/update-schedule.dto';
 import { StationService } from '../station/station.service';
 import { TrainService } from '../train/train.service';
 import { SearchScheduleDto } from './dto/search-schedule.dto';
+import { Booking, BookingDocument, BookingStatus } from 'src/booking/schemas/booking.schema';
 
 @Injectable()
 export class ScheduleService {
   constructor(
     @InjectModel(Schedule.name)
     private readonly scheduleModel: Model<ScheduleDocument>,
+    @InjectModel(Booking.name)
+    private readonly bookingModel: Model<BookingDocument>,
 
     private readonly stationService: StationService,
     private readonly trainService: TrainService,
@@ -38,12 +41,6 @@ export class ScheduleService {
     }
 
     const jsDay = parsedDate.getDay();
-
-    // JavaScript:
-    // Sunday = 0
-    // Monday = 1
-    // ...
-    // Saturday = 6
 
     return jsDay === 0 ? 6 : jsDay - 1;
   }
@@ -186,7 +183,6 @@ export class ScheduleService {
     //   }
     // }
 
-    
     // 8. Create schedule
     const schedule = new this.scheduleModel({
       trainId,
@@ -243,127 +239,157 @@ export class ScheduleService {
   //   return schedule;
   // }
 
+async search(searchScheduleDto: SearchScheduleDto) {
+  const { from, to, date } = searchScheduleDto;
 
-  async search(searchScheduleDto: SearchScheduleDto) {
-    const { from, to, date } = searchScheduleDto;
+  const fromStation = await this.stationService.findByCode(
+    from.toUpperCase(),
+  );
 
-    // 1. Find source station
-    const fromStation = await this.stationService.findByCode(
-      from.toUpperCase(),
+  if (!fromStation) {
+    throw new NotFoundException(`Source station ${from} not found`);
+  }
+
+  const toStation = await this.stationService.findByCode(to.toUpperCase());
+
+  if (!toStation) {
+    throw new NotFoundException(`Destination station ${to} not found`);
+  }
+
+  if (fromStation.id === toStation.id) {
+    throw new BadRequestException(
+      'Source and destination stations cannot be the same',
+    );
+  }
+
+  let direction: ScheduleDirection;
+
+  if (fromStation.distanceFromRoha < toStation.distanceFromRoha) {
+    direction = ScheduleDirection.ROHA_TO_THOKUR;
+  } else {
+    direction = ScheduleDirection.THOKUR_TO_ROHA;
+  }
+
+  const dayIndex = this.getDayIndex(date);
+
+  const schedules = await this.scheduleModel
+    .find({
+      direction,
+      status: ScheduleStatus.ACTIVE,
+    })
+    .populate('trainId')
+    .populate('stops.stationId')
+    .exec();
+
+  const results: any[] = [];
+
+  const today = new Date();
+  const journeyDate = new Date(`${date}T00:00:00`);
+
+  const isToday =
+    today.getFullYear() === journeyDate.getFullYear() &&
+    today.getMonth() === journeyDate.getMonth() &&
+    today.getDate() === journeyDate.getDate();
+
+  for (const schedule of schedules) {
+    if (schedule.operatingDays[dayIndex] !== '1') {
+      continue;
+    }
+
+    const fromIndex = schedule.stops.findIndex(
+      (stop) => stop.stationId._id.toString() === fromStation._id.toString(),
     );
 
-    if (!fromStation) {
-      throw new NotFoundException(`Source station ${from} not found`);
+    const toIndex = schedule.stops.findIndex(
+      (stop) => stop.stationId._id.toString() === toStation._id.toString(),
+    );
+
+    if (fromIndex === -1 || toIndex === -1) {
+      continue;
     }
 
-    // 2. Find destination station
-    const toStation = await this.stationService.findByCode(to.toUpperCase());
-
-    if (!toStation) {
-      throw new NotFoundException(`Destination station ${to} not found`);
+    if (fromIndex >= toIndex) {
+      continue;
     }
 
-    // 3. Source and destination cannot be same
-    if (fromStation.id === toStation.id) {
-      throw new BadRequestException(
-        'Source and destination stations cannot be the same',
-      );
-    }
+    if (isToday) {
+      const departureTime = schedule.stops[fromIndex].departureTime;
 
-    // 4. Determine direction
-    let direction: ScheduleDirection;
+      if (departureTime) {
+        const [hours, minutes] = departureTime.split(':').map(Number);
 
-    if (fromStation.distanceFromRoha < toStation.distanceFromRoha) {
-      direction = ScheduleDirection.ROHA_TO_THOKUR;
-    } else {
-      direction = ScheduleDirection.THOKUR_TO_ROHA;
-    }
+        const departureDate = new Date();
+        departureDate.setHours(hours, minutes, 0, 0);
 
-    // 5. Determine day of week
-    const dayIndex = this.getDayIndex(date);
-
-    // 6. Find active schedules in this direction
-    const schedules = await this.scheduleModel
-      .find({
-        direction,
-        status: ScheduleStatus.ACTIVE,
-      })
-      .populate('trainId')
-      .populate('stops.stationId')
-      .exec();
-
-    // 7. Filter schedules
-    const results: any[] = [];
-
-    for (const schedule of schedules) {
-      // Check operating day
-      if (schedule.operatingDays[dayIndex] !== '1') {
-        continue;
+        if (departureDate <= today) {
+          continue;
+        }
       }
-
-      // Find source and destination positions
-      const fromIndex = schedule.stops.findIndex(
-        (stop) => stop.stationId._id.toString() === fromStation._id.toString(),
-      );
-
-      const toIndex = schedule.stops.findIndex(
-        (stop) => stop.stationId._id.toString() === toStation._id.toString(),
-      );
-
-      // Train does not stop at both stations
-      if (fromIndex === -1 || toIndex === -1) {
-        continue;
-      }
-
-      // Source must come before destination
-      if (fromIndex >= toIndex) {
-        continue;
-      }
-
-      results.push({
-  scheduleId: schedule._id,
-  train: schedule.trainId,
-
-  from: {
-    stationId: fromStation._id,
-    stationCode: fromStation.stationCode,
-    stationName: fromStation.name,
-    departureTime: schedule.stops[fromIndex].departureTime,
-  },
-
-  to: {
-    stationId: toStation._id,
-    stationCode: toStation.stationCode,
-    stationName: toStation.name,
-    arrivalTime: schedule.stops[toIndex].arrivalTime,
-  },
-
-  direction: schedule.direction,
-});
     }
 
-    return results;
+    results.push({
+      scheduleId: schedule._id,
+      train: schedule.trainId,
+
+      from: {
+        stationId: fromStation._id,
+        stationCode: fromStation.stationCode,
+        stationName: fromStation.name,
+        departureTime: schedule.stops[fromIndex].departureTime,
+      },
+
+      to: {
+        stationId: toStation._id,
+        stationCode: toStation.stationCode,
+        stationName: toStation.name,
+        arrivalTime: schedule.stops[toIndex].arrivalTime,
+      },
+
+      direction: schedule.direction,
+    });
   }
 
+  return results;
+}
 
+async remove(id: string) {
+  const schedule = await this.scheduleModel.findById(id).exec();
 
-  async remove(id: string) {
-    const schedule = await this.scheduleModel
-      .findByIdAndUpdate(
-        id,
-        {
-          status: ScheduleStatus.INACTIVE,
-        },
-        {
-          new: true,
-        },
-      )
-      .exec();
-
-    if (!schedule) {
-      throw new NotFoundException('Schedule not found');
-    }
-
-    return schedule;
+  if (!schedule) {
+    throw new NotFoundException('Schedule not found');
   }
+
+  const today = new Date().toISOString().split('T')[0];
+
+  const bookings = await this.bookingModel
+    .find({
+      scheduleId: id,
+      journeyDate: { $gte: today },
+      status: {
+        $in: [BookingStatus.PENDING, BookingStatus.CONFIRMED],
+      },
+    })
+    .exec();
+
+  if (bookings.length > 0) {
+    await this.bookingModel.updateMany(
+      {
+        scheduleId: id,
+        journeyDate: { $gte: today },
+        status: {
+          $in: [BookingStatus.PENDING, BookingStatus.CONFIRMED],
+        },
+      },
+      {
+        $set: {
+          status: BookingStatus.CANCELLED,
+        },
+      },
+    );
+  }
+
+  schedule.status = ScheduleStatus.INACTIVE;
+
+  return await schedule.save();
+}
 }

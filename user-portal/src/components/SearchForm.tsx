@@ -159,6 +159,8 @@ function SearchForm() {
 
   const [error, setError] = useState("");
 
+  const today = new Date().toISOString().split("T")[0];
+
   //  Fetch stations
   useEffect(() => {
     const fetchStations = async () => {
@@ -185,21 +187,11 @@ function SearchForm() {
 
     setError("");
 
-    /*
-     * Make sure From was selected
-     * from autocomplete.
-     */
-
     if (!fromStation) {
       setError("Please select a departure station.");
 
       return;
     }
-
-    /*
-     * Make sure To was selected
-     * from autocomplete.
-     */
 
     if (!toStation) {
       setError("Please select an arrival station.");
@@ -207,19 +199,11 @@ function SearchForm() {
       return;
     }
 
-    /*
-     * Same station validation.
-     */
-
     if (fromStation._id === toStation._id) {
       setError("From and To stations cannot be the same.");
 
       return;
     }
-
-    /*
-     * Date validation.
-     */
 
     if (!date) {
       setError("Please select a journey date.");
@@ -230,11 +214,6 @@ function SearchForm() {
     try {
       setLoading(true);
 
-      /*
-       * Your current backend search
-       * expects station codes.
-       */
-
       const response = await api.get("/schedule/search", {
         params: {
           from: fromStation.stationCode,
@@ -242,10 +221,6 @@ function SearchForm() {
           date,
         },
       });
-
-      /*
-       * Navigate to results page.
-       */
 
       navigate("/search-results", {
         state: {
@@ -371,6 +346,7 @@ function SearchForm() {
               <input
                 type="date"
                 value={date}
+                min={today}
                 onChange={(e) => setDate(e.target.value)}
                 style={{
                   width: "100%",
@@ -379,6 +355,7 @@ function SearchForm() {
                   borderRadius: "4px",
                   boxSizing: "border-box",
                   fontSize: "14px",
+                  color: "#666",
                 }}
               />
             </div>

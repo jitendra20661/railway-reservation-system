@@ -28,11 +28,11 @@ export class ScheduleController {
   search(@Query() searchScheduleDto: SearchScheduleDto) {
     return this.scheduleService.search(searchScheduleDto);
   }
+
   @Get(':id')
   findById(@Param('id') id: string) {
     return this.scheduleService.findById(id);
   }
-
 
   @Post()
   @RequirePermission(PermissionResource.SCHEDULES, PermissionAction.CREATE)

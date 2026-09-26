@@ -93,7 +93,7 @@ export default function TrainsPage() {
     return (
       train.trainNumber.toLowerCase().includes(value) ||
       train.name.toLowerCase().includes(value)
-      // || train.type.toLowerCase().includes(value)
+      // train.type.toLowerCase().includes(value)
     );
   });
 
@@ -124,6 +124,17 @@ export default function TrainsPage() {
             + Add Train
           </button>
         )}
+      </div>
+
+      {/* Search */}
+      <div style={styles.toolbar}>
+        <input
+          type="text"
+          placeholder="Search train..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={styles.searchInput}
+        />
       </div>
 
       {/* Error */}
@@ -160,9 +171,15 @@ export default function TrainsPage() {
                 </tr>
               ) : (
                 filteredTrains.map((train) => (
-                  <tr key={train._id}>
+                  <tr
+                    key={train._id}
+                    style={{
+                      backgroundColor: !train.isActive ? "#f7f7f7" : "#fff",
+                      color: !train.isActive ? "#888" : "#111",
+                    }}
+                  >
                     <td style={styles.td}>
-                      <strong>{train.trainNumber}</strong>
+                      <p>{train.trainNumber}</p>
                     </td>
 
                     <td style={styles.td}>{train.name}</td>
@@ -181,17 +198,24 @@ export default function TrainsPage() {
 
                     <td style={styles.td}>
                       <div style={styles.actions}>
-                        {canUpdateTrains && (
-                          <button
-                            onClick={() =>
-                              router.push(`/dashboard/trains/${train._id}/edit`)
-                            }
-                          >
-                            Edit
-                          </button>
-                        )}
+                        {
+                          // canUpdateTrains && (
+                          //   <button
+                          //     onClick={() =>
+                          //       router.push(`/dashboard/trains/${train._id}/edit`)
+                          //     }
+                          //   >
+                          //     Edit
+                          //   </button>
+                          // )
+                          !train.isActive && (
+                            <span style={{ color: "gray", fontSize: "12px" }}>
+                              Deactivated
+                            </span>
+                          )
+                        }
 
-                        {canDeleteTrains && (
+                        {canDeleteTrains && train.isActive && (
                           <button onClick={() => handleDelete(train._id)}>
                             Delete
                           </button>
@@ -262,7 +286,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
 
   td: {
-    padding: "13px 14px",
+    padding: "8px 12px",
     borderBottom: "1px solid #eee",
     whiteSpace: "nowrap",
   },
@@ -274,12 +298,11 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#26733a",
     fontSize: "12px",
   },
-
   inactive: {
-    display: "inline-block",
+    // display: "inline-block",
     padding: "4px 8px",
-    background: "#f5f5f5",
-    color: "#777",
+    background: "#f5e8e8ff",
+    color: "red",
     fontSize: "12px",
   },
 
@@ -320,5 +343,14 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: "12px",
     fontSize: "13px",
     color: "#777",
+  },
+  searchInput: {
+    width: "320px",
+    height: "40px",
+    border: "1px solid #ccc",
+    padding: "0 12px",
+    fontSize: "14px",
+    outline: "none",
+    marginBottom: "15px",
   },
 };
