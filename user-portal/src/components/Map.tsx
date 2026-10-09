@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+
 import {
   MapContainer,
   Marker,
@@ -7,15 +8,40 @@ import {
   Tooltip,
   useMap,
 } from "react-leaflet";
+
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
+// =========================
+// Types
+// =========================
+
+interface Station {
+  _id?: string;
+  name: string;
+  stationCode: string;
+  geolocation?: {
+    latitude: number;
+    longitude: number;
+  };
+}
+
+interface MapProps {
+  fromStation?: Station | null;
+  toStation?: Station | null;
+}
+
+// =========================
 // Leaflet default marker icon
+// =========================
+
 const defaultIcon = new L.Icon({
   iconRetinaUrl:
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
+
   iconUrl:
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+
   shadowUrl:
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
 
@@ -25,15 +51,15 @@ const defaultIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
-/*
-  Automatically changes the map position
-  when From / To stations change.
-*/
-function MapController({ fromStation, toStation }) {
+// =========================
+// Map Controller
+// =========================
+
+function MapController({ fromStation, toStation }: MapProps) {
   const map = useMap();
 
   useEffect(() => {
-    const locations = [];
+    const locations: [number, number][] = [];
 
     if (fromStation?.geolocation) {
       locations.push([
@@ -71,15 +97,20 @@ function MapController({ fromStation, toStation }) {
   return null;
 }
 
-function MapView({ fromStation, toStation }) {
-  // Konkan region default position
-  const defaultCenter = [17.5, 73.5];
+// =========================
+// Map View
+// =========================
 
-  /*
-    Google Maps URL
-  */
-  const getGoogleMapsUrl = (station) => {
-    if (!station?.geolocation) {
+function MapView({ fromStation, toStation }: MapProps) {
+  // Konkan region default position
+  const defaultCenter: [number, number] = [17.5, 73.5];
+
+  // =========================
+  // Google Maps URL
+  // =========================
+
+  const getGoogleMapsUrl = (station: Station): string => {
+    if (!station.geolocation) {
       return "#";
     }
 
@@ -89,11 +120,12 @@ function MapView({ fromStation, toStation }) {
     return `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
   };
 
-  /*
-    Coordinates displayed in tooltip
-  */
-  const getCoordinates = (station) => {
-    if (!station?.geolocation) {
+  // =========================
+  // Coordinates displayed in tooltip
+  // =========================
+
+  const getCoordinates = (station: Station): string => {
+    if (!station.geolocation) {
       return "";
     }
 
@@ -151,15 +183,10 @@ function MapView({ fromStation, toStation }) {
                 }}
               >
                 <strong>{fromStation.name}</strong>
-
                 <br />
-
                 {fromStation.stationCode}
-
                 <br />
-
                 {getCoordinates(fromStation)}
-
                 <br />
 
                 <a
@@ -190,19 +217,12 @@ function MapView({ fromStation, toStation }) {
                 }}
               >
                 <strong>From Station</strong>
-
                 <br />
-
                 {fromStation.name}
-
                 <br />
-
                 {fromStation.stationCode}
-
                 <br />
-
                 {getCoordinates(fromStation)}
-
                 <br />
 
                 <a
@@ -245,15 +265,10 @@ function MapView({ fromStation, toStation }) {
                 }}
               >
                 <strong>{toStation.name}</strong>
-
                 <br />
-
                 {toStation.stationCode}
-
                 <br />
-
                 {getCoordinates(toStation)}
-
                 <br />
 
                 <a
@@ -284,19 +299,12 @@ function MapView({ fromStation, toStation }) {
                 }}
               >
                 <strong>To Station</strong>
-
                 <br />
-
                 {toStation.name}
-
                 <br />
-
                 {toStation.stationCode}
-
                 <br />
-
                 {getCoordinates(toStation)}
-
                 <br />
 
                 <a

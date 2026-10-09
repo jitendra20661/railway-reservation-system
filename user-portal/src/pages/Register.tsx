@@ -1,6 +1,8 @@
 import { useState } from "react";
+import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import { getErrorMessage } from "../utils";
 
 function Register() {
   const [name, setName] = useState("");
@@ -13,7 +15,7 @@ function Register() {
 
   const navigate = useNavigate();
 
-  const handleRegister = async (e) => {
+  const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     setError("");
@@ -44,7 +46,7 @@ function Register() {
     } catch (error) {
       console.error("Registration failed:", error);
 
-      setError(error.response?.data?.message || "Unable to create account.");
+      setError(getErrorMessage(error, "Unable to create account."));
     } finally {
       setLoading(false);
     }

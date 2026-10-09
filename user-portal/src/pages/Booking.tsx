@@ -1,15 +1,23 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../services/api";
+import type {
+  BookingAvailability,
+  SearchSchedule,
+  SearchState,
+} from "../types";
+import { getErrorMessage } from "../utils";
 
 function Booking() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const schedule = location.state?.schedule;
-  const search = location.state?.search;
+  const schedule = location.state?.schedule as SearchSchedule | undefined;
+  const search = location.state?.search as SearchState | undefined;
 
-  const [availability, setAvailability] = useState(null);
+  const [availability, setAvailability] = useState<BookingAvailability | null>(
+    null,
+  );
   const [seats, setSeats] = useState(1);
 
   const [loading, setLoading] = useState(true);
@@ -42,9 +50,7 @@ function Booking() {
       } catch (error) {
         console.error(error);
 
-        setError(
-          error.response?.data?.message || "Unable to check seat availability.",
-        );
+        setError(getErrorMessage(error, "Unable to check seat availability."));
       } finally {
         setLoading(false);
       }
@@ -54,6 +60,10 @@ function Booking() {
   }, [schedule, search]);
 
   const handleBooking = async () => {
+    if (!schedule || !search) {
+      setError("Booking details are missing. Please search for a train again.");
+      return;
+    }
     try {
       setBookingLoading(true);
       setError("");
@@ -72,7 +82,7 @@ function Booking() {
     } catch (error) {
       console.error(error);
 
-      setError(error.response?.data?.message || "Unable to complete booking.");
+      setError(getErrorMessage(error, "Unable to complete booking."));
     } finally {
       setBookingLoading(false);
     }

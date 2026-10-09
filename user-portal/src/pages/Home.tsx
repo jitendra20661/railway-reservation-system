@@ -1,7 +1,8 @@
 import SearchForm from "../components/SearchForm";
 
 function Home() {
-  const user = JSON.parse(localStorage.getItem("user"));
+  const storedUser = localStorage.getItem("user");
+  const user = storedUser ? JSON.parse(storedUser) : null;
 
   return (
     <div style={{ margin: "1em auto", minWidth: "80%" }}>

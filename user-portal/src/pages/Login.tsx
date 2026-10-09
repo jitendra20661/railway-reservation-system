@@ -1,6 +1,8 @@
 import { useState } from "react";
+import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import { getErrorMessage } from "../utils";
 import { useAuth } from "../context/AuthContext";
 
 function Login() {
@@ -13,7 +15,7 @@ function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
@@ -33,7 +35,7 @@ function Login() {
     } catch (error) {
       console.error("Login failed:", error);
 
-      setError(error.response?.data?.message || "Invalid email or password.");
+      setError(getErrorMessage(error, "Invalid email or password."));
     } finally {
       setLoading(false);
     }

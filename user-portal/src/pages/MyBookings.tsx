@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import type { BookingRecord } from "../types";
+import { getErrorMessage } from "../utils";
 
 function MyBookings() {
   const navigate = useNavigate();
 
-  const [bookings, setBookings] = useState([]);
+  const [bookings, setBookings] = useState<BookingRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -21,9 +23,7 @@ function MyBookings() {
       } catch (error) {
         console.error(error);
 
-        setError(
-          error.response?.data?.message || "Unable to fetch your bookings.",
-        );
+        setError(getErrorMessage(error, "Unable to fetch your bookings."));
       } finally {
         setLoading(false);
       }

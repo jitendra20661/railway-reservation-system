@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../services/api";
+import type { SearchSchedule, SearchState } from "../types";
 
 function SearchResults() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const results = location.state?.results || [];
-  const search = location.state?.search;
+  const results = (location.state?.results || []) as SearchSchedule[];
+  const search = location.state?.search as SearchState | undefined;
 
-  const [availability, setAvailability] = useState({});
+  const [availability, setAvailability] = useState<Record<string, number | null>>({});
   const [availabilityLoading, setAvailabilityLoading] = useState(true);
 
   useEffect(() => {
@@ -52,7 +53,7 @@ function SearchResults() {
           }),
         );
 
-        const availabilityMap = {};
+        const availabilityMap: Record<string, number | null> = {};
 
         availabilityResults.forEach((item) => {
           availabilityMap[item.scheduleId] = item.availableSeats;

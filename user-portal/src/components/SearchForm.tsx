@@ -2,6 +2,19 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import MapView from "./Map";
+import type { FormEvent } from "react";
+import type { Station } from "../types";
+import { getErrorMessage } from "../utils";
+
+interface StationInputProps {
+  label: string;
+  placeholder: string;
+  value: string;
+  stations: Station[];
+  onChange: (value: string) => void;
+  onSelect: (station: Station) => void;
+  onClear: () => void;
+}
 
 function StationInput({
   label,
@@ -11,7 +24,7 @@ function StationInput({
   onChange,
   onSelect,
   onClear,
-}) {
+}: StationInputProps) {
   const [open, setOpen] = useState(false);
 
   const filteredStations = stations.filter((station) => {
@@ -145,12 +158,12 @@ function StationInput({
 function SearchForm() {
   const navigate = useNavigate();
 
-  const [stations, setStations] = useState([]);
+  const [stations, setStations] = useState<Station[]>([]);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
 
-  const [fromStation, setFromStation] = useState(null);
-  const [toStation, setToStation] = useState(null);
+  const [fromStation, setFromStation] = useState<Station | null>(null);
+  const [toStation, setToStation] = useState<Station | null>(null);
 
   const [date, setDate] = useState("");
 
@@ -182,7 +195,7 @@ function SearchForm() {
     fetchStations();
   }, []);
 
-  const handleSearch = async (e) => {
+  const handleSearch = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     setError("");
@@ -241,9 +254,7 @@ function SearchForm() {
     } catch (error) {
       console.error("Search failed:", error);
 
-      setError(
-        error?.response?.data?.message || "Unable to search for trains.",
-      );
+      setError(getErrorMessage(error, "Unable to search for trains."));
     } finally {
       setLoading(false);
     }
